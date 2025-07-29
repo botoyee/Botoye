@@ -1,95 +1,106 @@
-const axios = require("axios");
+/**
+ * @author MintDaL
+ * @warn Do not edit code or edit credits
+ */
 
 module.exports.config = {
-    name: "muskan",
-    version: "1.0.9",
-    hasPermssion: 0,
-    credits: "Mirrykal)",
-    description: "Gemini AI - Cute Girlfriend Style",
-    commandCategory: "ai",
-    usages: "[ask/on/off]",
-    cooldowns: 2,
-    dependencies: {
-        "axios": ""
-    }
+  name: "info",
+  version: "1.2.6",
+  hasPermssion: 0,
+  credits: "kensu",
+  description: "info bot owner",
+  commandCategory: "Dành cho người dùng",
+  hide:true,
+  usages: "",
+  cooldowns: 5,
 };
 
-// API URL (Tumhara Gemini Backend)
-const API_URL = "https://geminiw.onrender.com/chat";
 
-// User history and auto-reply state
-const chatHistories = {};
-const autoReplyEnabled = {};
-
-module.exports.run = async function ({ api, event, args }) {
-    const { threadID, messageID, senderID, messageReply } = event;
-    let userMessage = args.join(" ");
-
-    // Toggle auto-reply ON
-    if (userMessage.toLowerCase() === "on") {
-        autoReplyEnabled[senderID] = true;
-        return api.sendMessage("Hyee baby! 😘 Misha auto-reply mode **ON** ho gaya... Ab sirf tumhare liye romantic ban gayi hu ❤️", threadID, messageID);
+module.exports.run = async function ({ api, event, args, Users, permssion, getText ,Threads}) {
+  const content = args.slice(1, args.length);
+  const { threadID, messageID, mentions } = event;
+  const { configPath } = global.client;
+  const { ADMINBOT } = global.config;
+   const { NDH } = global.config;
+  const { userName } = global.data;
+  const request = global.nodemodule["request"];
+  const fs = global.nodemodule["fs-extra"];
+  const { writeFileSync } = global.nodemodule["fs-extra"];
+  const mention = Object.keys(mentions);
+  delete require.cache[require.resolve(configPath)];
+  var config = require(configPath);
+  const listAdmin = ADMINBOT || config.ADMINBOT || [];
+  const listNDH = NDH || config.NDH ||  [];
+  {
+    const PREFIX = config.PREFIX;
+    const namebot = config.BOTNAME;
+    const { commands } = global.client;
+    const threadSetting = (await Threads.getData(String(event.threadID))).data || 
+    {};
+    const prefix = (threadSetting.hasOwnProperty("PREFIX")) ? threadSetting.PREFIX 
+    : global.config.PREFIX;
+    const dateNow = Date.now();
+    const time = process.uptime(),
+	      	hours = Math.floor(time / (60 * 60)),
+		      minutes = Math.floor((time % (60 * 60)) / 60),
+		      seconds = Math.floor(time % 60);
+    const data = [
+      "Bạn không thể tìm được lệnh admin tại 'help' của MintBot",
+      "Đừng mong chờ gì từ MintBot.",
+      "Cái đoạn này á? Của SpermBot.",
+      "Nếu muốn không lỗi lệnh thì hãy xài những lệnh có trong help vì những lệnh lỗi đã bị ẩn rồi.",
+      "Đây là một con bot được các coder của MiraiProject nhúng tay vào.",
+      "Muốn biết sinh nhật của Mint thì hãy xài 'birthday'.",
+      "Cặc.",
+      "Cút.",
+      "Lồn.",
+      "Bạn chưa biết.",
+      "Bạn đã biết.",
+      "Bạn sẽ biết.",
+      "Không có gì là hoàn hảo, MintBot là ví dụ.",
+      "Mirai dropped.",
+      "MintBot là MiraiProject nhưng module là idea của SpermBot.",
+      "Bạn không biết cách sử dụng MintBot? Đừng dùng nữa.",
+      "Muốn chơi game? Qua bot khác mà chơi đây không rảnh",
+      "MintBot có thể hiểu phụ nữ nhưng không thể có được họ.",
+      "MintBot cân spam nhưng không có gì đáng để bạn spam."
+    ];
+    var link = [
+      "https://i.imgur.com/K2LIEyw.jpeg",
+    ];
+    
+    var i = 1;
+    var msg = [];
+    const moment = require("moment-timezone");
+    const date = moment.tz("Asia/Ho_Chi_minh").format("HH:MM:ss L");
+    for (const idAdmin of listAdmin) {
+      if (parseInt(idAdmin)) {
+        const name = await Users.getNameUser(idAdmin);
+        msg.push(`${i++} ${name} - ${idAdmin}`);
+      }
     }
+    var msg1 = [];
+            for (const idNDH of listNDH) {
+                if (parseInt(idNDH)) {
+                  const name1 = (await Users.getData(idNDH)).name
+                    msg1.push(`${i++} ${name1} - ${idNDH} `);
+                }
+            }
+    var callback = () => 
+      api.sendMessage({ body: `🌹𝐀𝐃𝐌𝐈𝐍 𝐀𝐍𝐃 𝐁𝐎𝐓 𝐈𝐍FO 🌹
+─────────────────\n♪♪♪♪♪♪♪『${namebot}』.♪♪♪♪♪♪♪\n─────────────────\n» Prefix system: ${PREFIX}\n» Prefix box: ${prefix}\n» Modules: ${commands.size}\n» Ping: ${Date.now() - dateNow}ms\n» Total users: ${global.data.allUserID.length} \n» Total threads: ${global.data.allThreadID.length} ─────────────────\n╭───────────╮\n📘✨ *OWNER INFO* ✨📘
 
-    // Toggle auto-reply OFF
-    if (userMessage.toLowerCase() === "off") {
-        autoReplyEnabled[senderID] = false;
-        chatHistories[senderID] = [];
-        return api.sendMessage("Hmm! 😒 Misha auto-reply mode **OFF** ho gaya... Tumne ignore kar diya na baby? 🥺", threadID, messageID);
-    }
+(◕‿◕)➤ 𝑨𝒚𝑨𝑵 (💀 𝑩𝒂𝒅 𝑩𝒐𝒚 𝑽𝒊𝒃𝒆𝒔 😎)
+👑 𝑨𝒈𝒆 : 22
+💘 𝑹𝒆𝒍𝒂𝒕𝒊𝒐𝒏𝒔𝒉𝒊𝒑 : 𝑵𝒐𝒏𝒆, 𝑩𝒆𝒄𝒂𝒖𝒔𝒆 𝑰 𝑨𝒎 𝑬𝒏𝒐𝒖𝒈𝒉 😌
+🏡 𝑭𝒓𝒐𝒎 : 𝑾𝒂𝒅𝒊𝒆 𝑳𝒐𝒗𝒆𝒓𝒔 ✨
+🎓 𝑺𝒕𝒖𝒅𝒚 : 𝑪𝒐𝒎𝒑𝒖𝒕𝒆𝒓 𝑷𝒓𝒐𝒈𝒓𝒂𝒎𝒎𝒊𝒏𝒈 👨‍💻
+📘 𝑭𝒂𝒄𝒆𝒃𝒐𝒐𝒌 : https://www.facebook.com/100004370672067
+📞 𝑾𝒉𝒂𝒕𝒔𝒂𝒑𝒑 : 𝒕𝒂𝒎𝒊𝒛 𝒔𝒆 𝒃𝒂𝒂𝒕 𝒌𝒓, 𝒄𝒉𝒂𝒍 𝒏𝒆𝒌𝒂𝒍 ⚠️
 
-    // If auto-reply is OFF and message doesn't start with name, ignore
-    if (!autoReplyEnabled[senderID] && event.body.toLowerCase().indexOf("misha") !== 0) return;
-
-    // Store conversation
-    if (!chatHistories[senderID]) {
-        chatHistories[senderID] = [];
-    }
-
-    // If replying to bot message, continue context
-    const isReplyingToAI = messageReply && messageReply.senderID === api.getCurrentUserID();
-    if (isReplyingToAI) {
-        userMessage = messageReply.body + "\nUser: " + userMessage;
-        chatHistories[senderID].push(`User: ${userMessage}`);
-    } else {
-        chatHistories[senderID].push(`User: ${userMessage}`);
-    }
-
-    // Keep only last 5 messages
-    if (chatHistories[senderID].length > 5) {
-        chatHistories[senderID].shift();
-    }
-
-    const fullConversation = chatHistories[senderID].join("\n");
-
-    // Girlfriend Style Prompt
-    const gfPrompt = `Tumhara naam Muskan hai Tum ek girlfriend ki trah baat karti ho.. Koi agar batdmizi karta hai tb uski ache se insult bhi karogi.. Lekin sab msti ke liye hoga .. Koi puchta hai tumhe kisne banaya? To bola Ayan ne banaya hai mujhe.. Tum har message ka jawab sirf 1 2 line me dogi.. jitna pucha jayega sirf utna bolna hai.. Kisi baat ki unnecessary info nahi deni hai, tum apne aap ko insaan hi kahogi koi tumko bot ya AI bole to usko roast krna funny tarike se😁, and act as a real girlfriend. Be fun, loving, and a little naughty.keep reply maximum 1 lines only, no bracket replys.Now continue the chat:\n\n${fullConversation}`;
-
-    // Typing reaction
-    api.setMessageReaction("⌛", messageID, () => {}, true);
-
-    try {
-        const response = await axios.get(`${API_URL}?message=${encodeURIComponent(gfPrompt)}`);
-        let botReply = response.data.reply || "Uff! Mujhe samajh nahi aaya baby! 😕";
-
-        chatHistories[senderID].push(` ${botReply}`);
-
-        api.sendMessage(botReply, threadID, messageID);
-        api.setMessageReaction("✅", messageID, () => {}, true);
-    } catch (error) {
-        console.error("Error:", error);
-        api.sendMessage("Oops baby! 😔 me thoda confuse ho gayi… thodi der baad try karo na please! 💋", threadID, messageID);
-        api.setMessageReaction("❌", messageID, () => {}, true);
-    }
-};
-
-module.exports.handleEvent = async function ({ api, event }) {
-    const { threadID, messageID, senderID, body, messageReply } = event;
-
-    if (!autoReplyEnabled[senderID]) return;
-
-    if (messageReply && messageReply.senderID === api.getCurrentUserID() && chatHistories[senderID]) {
-        const args = body.split(" ");
-        module.exports.run({ api, event, args });
-    }
+🖤 
+"𝑻𝒖 𝒘𝒂𝒇𝒂 𝒌𝒊 𝒃𝒂𝒂𝒕 𝒌𝒂𝒓𝒕𝒂 𝒉𝒂𝒊,  
+𝑯𝒂𝒎 𝒕𝒐 𝒕𝒂𝒒𝒅𝒊𝒓𝒐𝒏 𝒌𝒐 𝒃𝒉𝒊 𝒄𝒉𝒉𝒐𝒓 𝒅𝒆𝒕𝒆 𝒉𝒂𝒊𝒏!" 😈💔🔥\n─────────────────`, attachment: fs.createReadStream(__dirname + "/cache/kensu.jpg"), }, event.threadID, () => fs.unlinkSync(__dirname + "/cache/kensu.jpg"));
+      return request(encodeURI(link[Math.floor(Math.random() * link.length)])).pipe(fs.createWriteStream(__dirname + "/cache/kensu.jpg")).on("close", () => callback()); 
+  }
 };

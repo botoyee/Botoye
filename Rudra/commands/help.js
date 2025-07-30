@@ -74,10 +74,10 @@ for (let item of returnArray) msg += `『${++i}』 ${prefix}${item}\n`;
     
     
     const siu = `╭──────────╮\n𝐂𝐎𝐌𝐌𝐀𝐍𝐃𝐒 𝐋𝐈𝐒𝐓\n╰──────────╯`;
- const text = `\n╭──────╮\n ✅𝐏𝐀𝐆𝐄✅\n╰──────╯ (${page}/${Math.ceil(arrayInfo.length/numberOfOnePage)})\n𝗨𝘀𝗲${prefix}help To See More 🌷𝗰𝗼𝗺𝗺𝗮𝗻𝗱 𝗻𝗮𝗺𝗲🌷more details about that command\n\nCurrently available ${arrayInfo.length} command on ${global.config.BOTNAME} Bot\n\n╭────────╮\n𝗡𝗔𝗠𝗘 𝗢𝗪𝗡𝗘𝗥 \n╰────────╯\n${prefix}\n╭──────╮\n   𝙊𝙒𝙉𝙀𝙍 𝘾𝘼𝙉𝘿𝙔 (𝙇𝘼𝙁𝙃𝘼𝙉𝙂𝘼)\n╰──────╯
+ const text = `\n╭──────╮\n ✅𝐏𝐀𝐆𝐄✅\n╰──────╯ (${page}/${Math.ceil(arrayInfo.length/numberOfOnePage)})\n𝗨𝘀𝗲${prefix}help To See More 🌷𝗰𝗼𝗺𝗺𝗮𝗻𝗱 𝗻𝗮𝗺𝗲🌷more details about that command\n\nCurrently available ${arrayInfo.length} command on ${global.config.BOTNAME} Bot\n\n╭────────╮\n𝗡𝗔𝗠𝗘 𝗢𝗪𝗡𝗘𝗥 \n╰────────╯\n${prefix}\n╭──────╮\n   𝙊𝙒𝙉𝙀𝙍 Ayan (Raza)\n╰──────╯
 💞𝗕𝗼𝘁 𝗖𝗼𝗺𝗺𝘂𝗻𝗶𝘁𝘆 𝗛𝗲𝗹𝗽𝗶𝗻𝗴 𝗭𝗼𝗻𝗲💞\n
 [✅𝐅𝐀𝐂𝐄𝐁𝐎𝐎K✅]\n
-https://www.facebook.com/100075291052694🥀🥀\n╭───────╮\n  𝐘𝐎𝐔𝐍𝐆𝐒𝐓𝐀𝐑𝐒'𝐬\n╰───────╯
+https://www.facebook.com/61565142011404🥀🥀\n╭───────╮\n  𝐘𝐎𝐔𝐍𝐆𝐒𝐓𝐀𝐑𝐒'𝐬\n╰───────╯
       ✌😎`;
  
     return api.sendMessage(siu + "\n\n" + msg  + text, threadID, async (error, info) => {

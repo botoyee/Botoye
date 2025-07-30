@@ -1,92 +1,92 @@
+const fs = require("fs");
+
 module.exports.config = {
-	name: "help",
-	version: "1.0.2",
-	hasPermssion: 0,
-	credits: "PetterSever",
-	description: "Beginner's Guide",
-	commandCategory: "system",
-	usages: "[Tên module]",
-	cooldowns: 1,
-	envConfig: {
-		autoUnsend: true,
-		delayUnsend: 300
-	}
+  name: "help",
+  version: "1.0.3",
+  hasPermssion: 0,
+  credits: "Modified by Ayan Ali",
+  description: "Show all command list or command details",
+  commandCategory: "system",
+  usages: "[command name]",
+  cooldowns: 1,
 };
 
 module.exports.languages = {
-	//"vi": {
-	//	"moduleInfo": "「 %1 」\n%2\n\n❯ Cách sử dụng: %3\n❯ Thuộc nhóm: %4\n❯ Thời gian chờ: %5 giây(s)\n❯ Quyền hạn: %6\n\n» Module code by %7 «",
-	//	"helpList": '[ Hiện tại đang có %1 lệnh có thể sử dụng trên bot này, Sử dụng: "%2help nameCommand" để xem chi tiết cách sử dụng! ]"',
-	//	"user": "Người dùng",
-  //      "adminGroup": "Quản trị viên nhóm",
-  //      "adminBot": "Quản trị viên bot"
-//	},
-	"en": {
-		"moduleInfo": " ◤ %1 ◥\n%2\n\n●𝗨𝘀𝗮𝗴𝗲: %3\n●𝗖𝗮𝘁𝗲𝗴𝗼𝗿𝘆: %4\n●𝗪𝗮𝗶𝘁𝗶𝗻𝗴 𝘁𝗶𝗺𝗲: %5 seconds(s)\n●𝗣𝗲𝗿𝗺𝗶𝘀𝘀𝗶𝗼𝗻: %6\n\n►𝗠𝗼𝗱𝘂𝗹𝗲 𝗰𝗼𝗱𝗲 𝗯𝘆 %7◄ ",
-		"helpList": '[ There are %1 commands on this bot, Use: "%2help nameCommand" to know how to use! ]',
-		"user": "User",
-        "adminGroup": "Admin group",
-        "adminBot": "Admin bot"
-	}
+  en: {
+    moduleInfo: `🌟 𝘾𝙊𝙈𝙈𝘼𝙉𝘿: %1 🌟\n━━━━━━━━━━━━━━\n📌 𝗗𝗲𝘀𝗰: %2\n📎 𝗨𝘀𝗮𝗴𝗲: %3\n📂 𝗖𝗮𝘁𝗲𝗴𝗼𝗿𝘆: %4\n⏱ 𝗪𝗮𝗶𝘁: %5s\n🔐 𝗣𝗲𝗿𝗺: %6\n\n👨‍💻 𝗖𝗿𝗲𝗱𝗶𝘁: %7`,
+    helpList: `✨ Bot me %1 commands hain. Use: "%2help [command]" for details.`,
+    user: "User",
+    adminGroup: "Group Admin",
+    adminBot: "Bot Admin"
+  }
 };
 
 module.exports.handleEvent = function ({ api, event, getText }) {
-	const { commands } = global.client;
-	const { threadID, messageID, body } = event;
+  const { commands } = global.client;
+  const { threadID, messageID, body } = event;
 
-	if (!body || typeof body == "undefined" || body.indexOf("help") != 0) return;
-	const splitBody = body.slice(body.indexOf("help")).trim().split(/\s+/);
-	if (splitBody.length == 1 || !commands.has(splitBody[1].toLowerCase())) return;
-	const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
-	const command = commands.get(splitBody[1].toLowerCase());
-	const prefix = (threadSetting.hasOwnProperty("PREFIX")) ? threadSetting.PREFIX : global.config.PREFIX;
-	return api.sendMessage(getText("moduleInfo", command.config.name, command.config.description, `${prefix}${command.config.name} ${(command.config.usages) ? command.config.usages : ""}`, command.config.commandCategory, command.config.cooldowns, ((command.config.hasPermssion == 0) ? getText("user") : (command.config.hasPermssion == 1) ? getText("adminGroup") : getText("adminBot")), command.config.credits), threadID, messageID);
-}
+  if (!body || !body.startsWith("help")) return;
 
-module.exports. run = function({ api, event, args, getText }) {
-	const { commands } = global.client;
-	const { threadID, messageID } = event;
-	const command = commands.get((args[0] || "").toLowerCase());
-	const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
-	const { autoUnsend, delayUnsend } = global.configModule[this.config.name];
-	const prefix = (threadSetting.hasOwnProperty("PREFIX")) ? threadSetting.PREFIX : global.config.PREFIX;
+  const splitBody = body.trim().split(/\s+/);
+  if (splitBody.length === 1 || !commands.has(splitBody[1].toLowerCase()])) return;
 
-	if (!command) {
-		const arrayInfo = [];
-		const page = parseInt(args[0]) || 1;
-    const numberOfOnePage = 20;
-    //*số thứ tự 1 2 3.....cú pháp ${++i}*//
-    let i = 0;
-    let msg = "";
-    
-    for (var [name, value] of (commands)) {
-      name += ``;
-      arrayInfo.push(name);
-    }
+  const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
+  const command = commands.get(splitBody[1].toLowerCase());
+  const prefix = threadSetting.PREFIX || global.config.PREFIX;
 
-    arrayInfo.sort((a, b) => a.data - b.data);
-    
-    const startSlice = numberOfOnePage*page - numberOfOnePage;
-    i = startSlice;
-    const returnArray = arrayInfo.slice(startSlice, startSlice + numberOfOnePage);
-    
-for (let item of returnArray) msg += `『${++i}』 ${prefix}${item}\n`;
-    
-    
-    const siu = `╭──────────╮\n𝐂𝐎𝐌𝐌𝐀𝐍𝐃𝐒 𝐋𝐈𝐒𝐓\n╰──────────╯`;
- const text = `\n╭──────╮\n ✅𝐏𝐀𝐆𝐄✅\n╰──────╯ (${page}/${Math.ceil(arrayInfo.length/numberOfOnePage)})\n𝗨𝘀𝗲${prefix}help To See More 🌷𝗰𝗼𝗺𝗺𝗮𝗻𝗱 𝗻𝗮𝗺𝗲🌷more details about that command\n\nCurrently available ${arrayInfo.length} command on ${global.config.BOTNAME} Bot\n\n╭────────╮\n𝗡𝗔𝗠𝗘 𝗢𝗪𝗡𝗘𝗥 \n╰────────╯\n${prefix}\n╭──────╮\n   𝙊𝙒𝙉𝙀𝙍 Ayan (Raza)\n╰──────╯
-💞𝗕𝗼𝘁 𝗖𝗼𝗺𝗺𝘂𝗻𝗶𝘁𝘆 𝗛𝗲𝗹𝗽𝗶𝗻𝗴 𝗭𝗼𝗻𝗲💞\n
-[✅𝐅𝐀𝐂𝐄𝐁𝐎𝐎K✅]\n
-https://www.facebook.com/61565142011404🥀🥀\n╭───────╮\n  𝐘𝐎𝐔𝐍𝐆𝐒𝐓𝐀𝐑𝐒'𝐬\n╰───────╯
-      ✌😎`;
- 
-    return api.sendMessage(siu + "\n\n" + msg  + text, threadID, async (error, info) => {
-			if (autoUnsend) {
-				await new Promise(resolve => setTimeout(resolve, delayUnsend * 1000));
-				return api.unsendMessage(info.messageID);
-			} else return;
-		}, event.messageID);
-	}
+  return api.sendMessage({
+    body: getText("moduleInfo",
+      command.config.name,
+      command.config.description,
+      `${prefix}${command.config.name} ${(command.config.usages || "")}`,
+      command.config.commandCategory,
+      command.config.cooldowns,
+      command.config.hasPermssion == 0 ? getText("user") :
+      command.config.hasPermssion == 1 ? getText("adminGroup") : getText("adminBot"),
+      command.config.credits
+    ),
+    attachment: fs.createReadStream(__dirname + `/cache/ayanhelp.jpg`)
+  }, threadID, messageID);
+};
 
-	return api.sendMessage(getText("moduleInfo", command.config.name, command.config.description, `${prefix}${command.config.name} ${(command.config.usages) ? command.config.usages : ""}`, command.config.commandCategory, command.config.cooldowns, ((command.config.hasPermssion == 0) ? getText("user") : (command.config.hasPermssion == 1) ? getText("adminGroup") : getText("adminBot")), command.config.credits), threadID, messageID);
+module.exports.run = function ({ api, event, args, getText }) {
+  const { commands } = global.client;
+  const { threadID, messageID } = event;
+  const threadSetting = global.data.threadData.get(parseInt(threadID)) || {};
+  const prefix = threadSetting.PREFIX || global.config.PREFIX;
+
+  const page = parseInt(args[0]) || 1;
+  const itemsPerPage = 20;
+  let commandList = Array.from(commands.keys()).sort();
+  const totalPages = Math.ceil(commandList.length / itemsPerPage);
+
+  if (args[0] && commands.has(args[0].toLowerCase())) {
+    const command = commands.get(args[0].toLowerCase());
+    return api.sendMessage({
+      body: getText("moduleInfo",
+        command.config.name,
+        command.config.description,
+        `${prefix}${command.config.name} ${(command.config.usages || "")}`,
+        command.config.commandCategory,
+        command.config.cooldowns,
+        command.config.hasPermssion == 0 ? getText("user") :
+        command.config.hasPermssion == 1 ? getText("adminGroup") : getText("adminBot"),
+        command.config.credits
+      ),
+      attachment: fs.createReadStream(__dirname + `/cache/ayanhelp.jpg`)
+    }, threadID, messageID);
+  }
+
+  const start = (page - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const displayCommands = commandList.slice(start, end).map((cmd, index) =>
+    `『${start + index + 1}』 ➤ ${prefix}${cmd}`).join("\n");
+
+  const header = `╭─────────────⭓\n  ✨ 𝙔𝙊𝙐𝙍 𝘾𝙊𝙈𝙈𝘼𝙉𝘿 𝙈𝙀𝙉𝙐 ✨\n╰─────────────⭓`;
+  const footer = `\n\n📄 Page: ${page}/${totalPages}  |  Total: ${commandList.length} cmds\n🔗 Owner: Ayan Ali\n🌐 fb.com/61565142011404`;
+
+  return api.sendMessage({
+    body: `${header}\n${displayCommands}${footer}`,
+    attachment: fs.createReadStream(__dirname + `/noprefix/ayanhelp.jpg`)
+  }, threadID, messageID);
 };

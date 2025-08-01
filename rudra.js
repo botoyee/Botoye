@@ -205,7 +205,7 @@ function onBot({ models: botModel }) {
                         global.client.commands.set(module.config.name, module);
                         logger.loader(global.getText('priyansh', 'successLoadModule', module.config.name));
                     } catch (error) {
-                        logger.loader(global.getText('priyansh', 'failLoadModule', module.config.name, error), 'error');
+                        logger.loader(global.getText('priyansh', 'loadedConfig', module.config?.name || "unknown"));
                     };
                 }
             }(),

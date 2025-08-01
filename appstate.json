@@ -1,128 +1,22 @@
 [
-    {
-        "key": "dbln",
-        "value": "%7B%2261559026826714%22%3A%22n29xAxHT%22%2C%2261554982024438%22%3A%22XrFoasAz%22%7D",
-        "domain": "facebook.com",
-        "path": "/login/device-based/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "datr",
-        "value": "tJSIaG3cmEOeFNAV1q3tgoH9",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "sb",
-        "value": "tJSIaMLV8QHT-5E-jZhqjE0V",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "locale",
-        "value": "en_GB",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "dpr",
-        "value": "3.2983407974243164",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "ps_l",
-        "value": "1",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "ps_n",
-        "value": "1",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "vpd",
-        "value": "v1%3B708x360x3",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "pas",
-        "value": "61559026826714%3AMTNn0hfQ2I%2C61554982024438%3AwoDyxa0CGm",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "c_user",
-        "value": "61554982024438",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "xs",
-        "value": "37%3A0sdiitwlhTKCDg%3A2%3A1754064549%3A-1%3A-1",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "fr",
-        "value": "1Abn2mGjjKdP54qn3.AWfinIq280Q-GNN-TlEr-scWG6ADD43BdoadRZh13d6JV8yG3Y4.Boimjv..AAA.0.0.BojOn9.AWfVpV213cuBAUeB1VoO8K4sYm0",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "fbl_st",
-        "value": "100635457%3BT%3A29234423",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    },
-    {
-        "key": "wl_cbv",
-        "value": "v2%3Bclient_version%3A2884%3Btimestamp%3A1754065405",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2025-08-01T16:23:47.270Z",
-        "lastAccessed": "2025-08-01T16:23:47.270Z"
-    }
+  {
+    "key": "c_user",
+    "value": "61554982024438"
+  },
+  {
+    "key": "xs",
+    "value": "37:0sdiitwlhTKCDg:2:1754064549:-1:-1"
+  },
+  {
+    "key": "datr",
+    "value": "tJSIaG3cmEOeFNAV1q3tgoH9"
+  },
+  {
+    "key": "fr",
+    "value": "1Abn2mGjjKdP54qn3.AWffVPhkN6lqO22WBqorVJvkOyCDFJXMs6olXfFzkhi8qRQnWcM.Boimjv..AAA.0.0.BojO0H.AWdEX9e0cmtrADPQiyOkQZsFNmY"
+  },
+  {
+    "key": "sb",
+    "value": "tJSIaMLV8QHT-5E-jZhqjE0V"
+  }
 ]

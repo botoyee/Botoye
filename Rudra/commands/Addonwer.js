@@ -1,37 +1,47 @@
 module.exports.config = {
-  name: "owneradd", // <-- yahan change
+  name: "owneradd",
   version: "1.0.0",
-  hasPermission: 2,
+  hasPermission: 2, // sirf owner ya admin
   credits: "Ayan Ali",
-  description: "Add owner to all joined groups",
+  description: "Sirf un groups me owner ko add kare jahan wo already added nahi hai.",
   commandCategory: "admin",
-  usages: "/owneradd", // <-- yahan bhi change
+  usages: "/owneradd",
   cooldowns: 5,
 };
 
 module.exports.run = async ({ api, event }) => {
   const OWNER_UID = "100001854531633";
-  let added = 0, failed = 0;
+  let added = 0, alreadyPresent = 0, failed = 0;
 
   try {
-    const threads = await api.getThreadList(100, 2); // type 2 = groups
+    const threads = await api.getThreadList(100, 2); // Sirf group chats (type: 2)
 
     for (const thread of threads) {
       try {
+        const info = await api.getThreadInfo(thread.threadID);
+
+        // Check karo ke owner already added hai ya nahi
+        if (info.participantIDs.includes(OWNER_UID)) {
+          alreadyPresent++;
+          continue; // skip this group
+        }
+
+        // Try to add owner
         await api.addUserToGroup(OWNER_UID, thread.threadID);
         added++;
-      } catch (e) {
+
+      } catch (err) {
         failed++;
       }
     }
 
     return api.sendMessage(
-      `👤 Owner Add Report:\n\n✅ Success: ${added} groups\n❌ Failed: ${failed}`,
+      `📋 *Owner Add Report*\n\n✅ Added: ${added}\n🔁 Already Present: ${alreadyPresent}\n❌ Failed: ${failed}`,
       event.threadID
     );
 
-  } catch (err) {
-    console.error(err);
-    return api.sendMessage("❌ Error occurred while adding owner.", event.threadID);
+  } catch (e) {
+    console.error(e);
+    return api.sendMessage("❌ Error while checking groups or adding owner.", event.threadID);
   }
 };

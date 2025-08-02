@@ -1,49 +1,35 @@
-const fs = require("fs-extra");
-const path = require("path");
+const fs = require("fs-extra"); const path = require("path"); const axios = require("axios");
 
-module.exports.config = {
-  name: "voice",
-  version: "1.0.0",
-  hasPermssion: 2, // Sirf owner use kar sakta hai
-  credits: "Kashif Raza (Ayan Ali)",
-  description: "Send voice message to all groups using Google TTS",
-  commandCategory: "system",
-  usages: "/voice [text]",
-  cooldowns: 5,
-};
+module.exports.config = { name: "voice", version: "1.0.0", hasPermssion: 2, credits: "Modified by Technical Solution", description: "Send a voice message to all threads using Google TTS", commandCategory: "Admin", usages: "/voice [text]", cooldowns: 10 };
 
-module.exports.run = async function ({ api, event, args }) {
-  const message = args.join(" ");
-  if (!message) return api.sendMessage("❌ Text missing!\nUse: /voice [your message]", event.threadID);
+module.exports.run = async function ({ api, event, args, Users }) { if (!args[0]) return api.sendMessage("❌ | Please provide a message to speak.", event.threadID, event.messageID);
 
-  const lang = "hi"; // aap 'auto' ya 'en' bhi rakh sakte hain
-  const fileName = `${event.threadID}_${Date.now()}.mp3`;
-  const filePath = path.join(__dirname, "cache", fileName);
-  const ttsURL = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(message)}&tl=${lang}&client=tw-ob`;
+const text = args.join(" "); const lang = "hi"; // you can change it to "en" if you want English const ttsUrl = https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${lang}&client=tw-ob; const filePath = path.join(_dirname, "cache", `tts${Date.now()}.mp3");
 
-  // Download audio file
-  await global.utils.downloadFile(ttsURL, filePath);
+const allThread = global.data.allThreadID || []; let success = 0, fail = 0;
 
-  // Get all groups
-  const threadList = await api.getThreadList(100, null, ["INBOX"]);
-  const groupIDs = threadList.filter(t => t.isGroup && t.name != null).map(t => t.threadID);
+try { const response = await axios({ method: "GET", url: ttsUrl, responseType: "stream" });
 
-  api.sendMessage(`📢 Sending voice note to ${groupIDs.length} groups...`, event.threadID);
+const writer = fs.createWriteStream(filePath);
+response.data.pipe(writer);
 
-  let success = 0, failed = 0;
-
-  for (const id of groupIDs) {
+writer.on("finish", async () => {
+  for (const thread of allThread) {
     try {
-      await api.sendMessage({
-        attachment: fs.createReadStream(filePath),
-      }, id);
+      await api.sendMessage({ attachment: fs.createReadStream(filePath) }, thread);
       success++;
     } catch (e) {
-      failed++;
+      fail++;
     }
   }
+  fs.unlinkSync(filePath);
+  api.sendMessage(`✅ | Voice message sent to ${success} threads. Failed in ${fail} threads.`, event.threadID);
+});
 
-  fs.unlinkSync(filePath); // Remove file after use
+writer.on("error", err => {
+  console.error(err);
+  api.sendMessage("❌ | Error while creating voice message.", event.threadID);
+});
 
-  return api.sendMessage(`✅ Voice sent to ${success} groups\n❌ Failed: ${failed}`, event.threadID);
-};
+} catch (err) { console.error(err); api.sendMessage("❌ | Failed to generate voice from Google.", event.threadID); } };
+

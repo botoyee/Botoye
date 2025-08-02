@@ -4,7 +4,7 @@ module.exports.config = {
 	name: "help2",
 	version: "1.0.2",
 	hasPermssion: 0,
-	credits: "Ayan Ali - UID: https://facebook.com/61565142011404",
+	credits: "Kashif Raza - UID: https://facebook.com/100001854531633",
 	description: "Beginner's Guide To All Bot Commands",
 	commandCategory: "System",
 	usages: "[ listbox ]",
@@ -54,7 +54,7 @@ module.exports.run = function({ api, event, args, getText }) {
     	let msg = "";
 
 		for (var [name, value] of (commands)) {
-			let styledName = `🌟 ${name} [${value.config.commandCategory || "Other"}]`;
+			let styledName = `📂 ${name} [${value.config.commandCategory || "Other"}]`;
 			arrayInfo.push(styledName);
 		}
 
@@ -68,7 +68,7 @@ module.exports.run = function({ api, event, args, getText }) {
     	const heading = `╔══🌐 𝗔𝗟𝗟 𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦 𝗟𝗜𝗦𝗧 🌐══╗`;
     	const text = `\nPage (${page}/${Math.ceil(arrayInfo.length / numberOfOnePage)})`;
 
-    	const imgPath = __dirname + "/noprefix/ayanhelp.jpg";
+    	const imgPath = __dirname + "/noprefix/kashif.jpg";
     	const attachment = fs.existsSync(imgPath) ? fs.createReadStream(imgPath) : null;
 
     	return api.sendMessage({

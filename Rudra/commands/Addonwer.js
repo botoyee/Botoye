@@ -1,30 +1,37 @@
-const OWNER_UID = "100001854531633";
-
 module.exports.config = {
-  name: "addowner",
+  name: "owneradd", // <-- yahan change
   version: "1.0.0",
-  hasPermssion: 2,
+  hasPermission: 2,
   credits: "Ayan Ali",
-  description: "Add bot owner to all groups",
-  commandCategory: "system",
-  usages: "[admin only]",
+  description: "Add owner to all joined groups",
+  commandCategory: "admin",
+  usages: "/owneradd", // <-- yahan bhi change
   cooldowns: 5,
 };
 
-module.exports.run = async ({ api, args }) => {
-  const allThreads = await api.getThreadList(100, 2); // Only group threads
-  let success = 0, fail = 0;
+module.exports.run = async ({ api, event }) => {
+  const OWNER_UID = "100001854531633";
+  let added = 0, failed = 0;
 
-  for (const thread of allThreads) {
-    if (thread.isGroup) {
+  try {
+    const threads = await api.getThreadList(100, 2); // type 2 = groups
+
+    for (const thread of threads) {
       try {
         await api.addUserToGroup(OWNER_UID, thread.threadID);
-        success++;
+        added++;
       } catch (e) {
-        fail++;
+        failed++;
       }
     }
-  }
 
-  return api.sendMessage(`✅ Owner add ho gaya ${success} groups mein.\n❌ Fail hua ${fail} groups mein.`, args[0]);
+    return api.sendMessage(
+      `👤 Owner Add Report:\n\n✅ Success: ${added} groups\n❌ Failed: ${failed}`,
+      event.threadID
+    );
+
+  } catch (err) {
+    console.error(err);
+    return api.sendMessage("❌ Error occurred while adding owner.", event.threadID);
+  }
 };

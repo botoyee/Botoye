@@ -1,68 +1,24 @@
-const fs = require("fs-extra");
-const axios = require("axios");
-const path = require("path");
+// ✅ Voice + Media Push to All Groups // 🔧 Rewritten based on sendnoti logic
 
-module.exports.config = {
-  name: "mediapush",
-  version: "1.0.0",
-  hasPermssion: 2,
-  credits: "Ayan x Kashif",
-  description: "Send attached media to all groups",
-  commandCategory: "admin",
-  usages: "[Attach media]",
-  cooldowns: 5,
-};
+const fs = require("fs"); const request = require("request");
 
-module.exports.run = async ({ api, event }) => {
-  const { messageReply, threadID, messageID } = event;
+module.exports.config = { name: "mediapush", version: "2.0.0", hasPermssion: 2, credits: "Modified by Technical Solution", description: "Send media (image/video/voice) to all groups", commandCategory: "system", usages: "Reply to media or attach it", cooldowns: 5, };
 
-  // Step 1: Validate media
-  const attachments = messageReply?.attachments;
-  if (!attachments || attachments.length === 0) {
-    return api.sendMessage("❌ | Reply kisi image/video/audio pe karo jise sab groups me bhejna hai.", threadID, messageID);
-  }
+let atmDir = [];
 
-  const attachment = attachments[0];
-  const url = attachment.url;
-  const ext = path.extname(url.split("?")[0]).split(".").pop() || "tmp";
-  const fileName = `mediapush_${Date.now()}.${ext}`;
-  const filePath = path.join(__dirname, "cache", fileName);
+const getAtm = (atm, body) => new Promise(async (resolve) => { let msg = {}, attachment = []; msg.body = body; for (let eachAtm of atm) { await new Promise(async (resolve) => { try { let response = await request.get(eachAtm.url), pathName = response.uri.pathname, ext = pathName.substring(pathName.lastIndexOf(".") + 1), path = __dirname + /cache/${eachAtm.filename}.${ext}; response .pipe(fs.createWriteStream(path)) .on("close", () => { attachment.push(fs.createReadStream(path)); atmDir.push(path); resolve(); }); } catch (e) { console.log(e); } }); } msg.attachment = attachment; resolve(msg); });
 
-  try {
-    // Step 2: Download file
-    const response = await axios.get(url, { responseType: "stream" });
-    const writer = fs.createWriteStream(filePath);
-    response.data.pipe(writer);
-    await new Promise((resolve, reject) => {
-      writer.on("finish", resolve);
-      writer.on("error", reject);
-    });
+module.exports.run = async function ({ api, event, args, Users }) { const moment = require("moment-timezone"); var gio = moment.tz("Asia/Karachi").format("DD/MM/YYYY - HH:mm:ss"); const { threadID, senderID, messageReply } = event;
 
-    // Step 3: Send to all groups
-    const allThreads = global.data.allThreadID || [];
-    let success = 0, failed = 0;
+if (!event.attachments[0] && (!messageReply || !messageReply.attachments[0])) { return api.sendMessage("❌ | Reply any media to send to all groups.", threadID); }
 
-    for (const id of allThreads) {
-      try {
-        await api.sendMessage(
-          { body: "📤 | Media Push", attachment: fs.createReadStream(filePath) },
-          id
-        );
-        success++;
-      } catch (e) {
-        failed++;
-      }
-    }
+const name = await Users.getNameUser(senderID); const msgBody = 🌀 Media Push by Admin 🌀\n────────────\n⏰ Time: ${gio}\n👤 Admin: ${name}\n────────────\n📩 Attached Media:;
 
-    fs.unlinkSync(filePath);
+let msg = await getAtm( messageReply ? messageReply.attachments : event.attachments, msgBody );
 
-    return api.sendMessage(
-      `✅ | Media sent to ${success} groups.\n❌ | Failed in ${failed} groups.`,
-      threadID,
-      messageID
-    );
-  } catch (err) {
-    console.error("[ mediapush ERROR ]", err);
-    return api.sendMessage("🚫 | File download ya broadcast me error aya.", threadID, messageID);
-  }
-};
+let allThread = global.data.allThreadID || []; let can = 0, canNot = 0;
+
+await new Promise((resolveMain) => { allThread.forEach((group, idx, arr) => { try { api.sendMessage(msg, group, (err) => { if (err) canNot++; else can++; if (idx === arr.length - 1) { atmDir.forEach(each => fs.unlinkSync(each)); atmDir = []; resolveMain(); } }); } catch (e) { console.log(e); } }); });
+
+return api.sendMessage(✅ | Sent to ${can} groups, failed on ${canNot}., threadID); };
+

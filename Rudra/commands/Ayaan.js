@@ -22,12 +22,12 @@ module.exports.run = async function({ api, args, Users, event}) {
     var a = function (a) { api.sendMessage(a, event.threadID); }
 a("📘✨ *OWNER INFO* ✨📘
 
-(◕‿◕)➤ 𝑨𝒚𝑨𝑵 (💀 𝑩𝒂𝒅 𝑩𝒐𝒚 𝑽𝒊𝒃𝒆𝒔 😎)
+(◕‿◕)➤ ★彡[ᴋᴀꜱʜɪꜰ ʀᴀᴢᴀ]彡★ (💀 𝑩𝒂𝒅 𝑩𝒐𝒚 𝑽𝒊𝒃𝒆𝒔 😎)
 👑 𝑨𝒈𝒆 : 22
 💘 𝑹𝒆𝒍𝒂𝒕𝒊𝒐𝒏𝒔𝒉𝒊𝒑 : 𝑵𝒐𝒏𝒆, 𝑩𝒆𝒄𝒂𝒖𝒔𝒆 𝑰 𝑨𝒎 𝑬𝒏𝒐𝒖𝒈𝒉 😌
 🏡 𝑭𝒓𝒐𝒎 : 𝑾𝒂𝒅𝒊𝒆 𝑳𝒐𝒗𝒆𝒓𝒔 ✨
 🎓 𝑺𝒕𝒖𝒅𝒚 : 𝑪𝒐𝒎𝒑𝒖𝒕𝒆𝒓 𝑷𝒓𝒐𝒈𝒓𝒂𝒎𝒎𝒊𝒏𝒈 👨‍💻
-📘 𝑭𝒂𝒄𝒆𝒃𝒐𝒐𝒌 : https://www.facebook.com/100004370672067
+📘 𝑭𝒂𝒄𝒆𝒃𝒐𝒐𝒌 : https://www.facebook.com/100001854531633
 📞 𝑾𝒉𝒂𝒕𝒔𝒂𝒑𝒑 : 𝒕𝒂𝒎𝒊𝒛 𝒔𝒆 𝒃𝒂𝒂𝒕 𝒌𝒓, 𝒄𝒉𝒂𝒍 𝒏𝒆𝒌𝒂𝒍 ⚠️
 
 🖤 

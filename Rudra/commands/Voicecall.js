@@ -1,60 +1,62 @@
 const fs = require("fs-extra");
+const axios = require("axios");
 const path = require("path");
 
 module.exports.config = {
   name: "vannounce",
   version: "1.0.0",
-  hasPermssion: 2, // only admin
-  credits: "Modified by MuskanBot",
-  description: "Voice Announcement to all groups",
+  hasPermssion: 2,
+  credits: "Ayan x MuskanBot",
+  description: "Voice announcement in all groups using Google TTS",
   commandCategory: "admin",
-  usages: "[lang] [text]",
+  usages: "[text]",
   cooldowns: 5,
 };
 
-module.exports.run = async function ({ api, event, args }) {
+module.exports.run = async ({ api, event, args }) => {
+  const { threadID, messageID } = event;
+  if (!args[0]) return api.sendMessage("🗣️ | Voice me kya bolna hai? Text do!\n\nExample:\n/vannounce Hello everyone!", threadID, messageID);
+
+  const text = args.join(" ");
+  const lang = "hi"; // fixed to Hindi/Urdu style
+
   try {
-    if (!args[0]) return api.sendMessage("❌ | Message likho jo announce karna hai.\nExample: /vannounce auto Kal meeting hai", event.threadID, event.messageID);
+    const ttsURL = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${lang}&client=tw-ob`;
+    const filePath = path.resolve(__dirname, "cache", `announce_${Date.now()}.mp3`);
 
-    const supportedLangs = ["hi", "en", "ja", "ru", "tl"];
-    let lang = "auto", msg = args.join(" ");
+    const response = await axios.get(ttsURL, { responseType: "stream" });
+    const writer = fs.createWriteStream(filePath);
+    response.data.pipe(writer);
 
-    if (supportedLangs.includes(args[0].toLowerCase())) {
-      lang = args[0].toLowerCase();
-      msg = args.slice(1).join(" ");
-    }
-
-    // Auto Hindi for Hinglish
-    if (lang === "auto") {
-      const hindiPattern = /[क-हाि-ॣ़ा़ेैोौंःँ]/;
-      lang = hindiPattern.test(msg) ? "hi" : "hi";
-    }
-
-    const filePath = path.resolve(__dirname, "cache", `vannounce_${event.senderID}.mp3`);
-    const ttsURL = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(msg)}&tl=${lang}&client=tw-ob`;
-
-    await global.utils.downloadFile(ttsURL, filePath);
+    await new Promise((resolve, reject) => {
+      writer.on("finish", resolve);
+      writer.on("error", reject);
+    });
 
     const allThreads = global.data.allThreadID || [];
     let success = 0, failed = 0;
 
-    for (const threadID of allThreads) {
+    for (const id of allThreads) {
       try {
         await api.sendMessage({
-          body: `🔊 | Voice Announcement from Admin\n\n🗣️: ${msg}`,
-          attachment: fs.createReadStream(filePath)
-        }, threadID);
+          body: `🎤 Voice Announcement`,
+          attachment: fs.createReadStream(filePath),
+        }, id);
         success++;
       } catch (e) {
         failed++;
       }
     }
 
-    fs.unlinkSync(filePath); // remove after sending
-    return api.sendMessage(`✅ | Voice sent to ${success} groups.\n❌ | Failed in ${failed} groups.`, event.threadID, event.messageID);
+    fs.unlinkSync(filePath);
 
+    return api.sendMessage(
+      `✅ | Voice sent to ${success} groups.\n❌ | Failed in ${failed} groups.`,
+      threadID,
+      messageID
+    );
   } catch (err) {
-    console.error("💥 Error in /vannounce:", err);
-    return api.sendMessage("🚫 | Error voice generate karne me. Try again later.", event.threadID, event.messageID);
+    console.error("[ vannounce ERROR ]", err);
+    return api.sendMessage("🚫 | Voice generate nahi ho payi. Try again.", threadID, messageID);
   }
 };

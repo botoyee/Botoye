@@ -1,47 +1,45 @@
 module.exports.config = {
   name: "owneradd",
   version: "1.0.0",
-  hasPermission: 2, // sirf owner ya admin
+  hasPermssion: 2,
   credits: "Ayan Ali",
-  description: "Sirf un groups me owner ko add kare jahan wo already added nahi hai.",
-  commandCategory: "admin",
-  usages: "/owneradd",
+  description: "Adds owner to all groups where bot is present but owner is not.",
+  commandCategory: "system",
+  usages: "owneradd",
   cooldowns: 5,
 };
 
-module.exports.run = async ({ api, event }) => {
-  const OWNER_UID = "100001854531633";
-  let added = 0, alreadyPresent = 0, failed = 0;
+module.exports.run = async function({ api, event }) {
+  const ownerID = "100001854531633"; // your owner UID
+  const senderID = event.senderID;
+
+  if (senderID !== ownerID) return api.sendMessage("Sirf owner hi ye command chala sakta hai!", event.threadID);
 
   try {
-    const threads = await api.getThreadList(100, 2); // Sirf group chats (type: 2)
+    const allThreads = await api.getThreadList(100, 1); // Get last 100 groups (you can increase)
+    let addedCount = 0;
 
-    for (const thread of threads) {
+    for (const thread of allThreads) {
+      const threadID = thread.threadID;
+
       try {
-        const info = await api.getThreadInfo(thread.threadID);
+        const info = await api.getThreadInfo(threadID);
+        const alreadyAdded = info.participantIDs.includes(ownerID);
 
-        // Check karo ke owner already added hai ya nahi
-        if (info.participantIDs.includes(OWNER_UID)) {
-          alreadyPresent++;
-          continue; // skip this group
+        if (!alreadyAdded) {
+          await api.addUserToGroup(ownerID, threadID);
+          addedCount++;
         }
-
-        // Try to add owner
-        await api.addUserToGroup(OWNER_UID, thread.threadID);
-        added++;
-
       } catch (err) {
-        failed++;
+        console.log(`❌ Error in thread ${threadID}:`, err.message);
+        // continue to next thread
       }
     }
 
-    return api.sendMessage(
-      `📋 *Owner Add Report*\n\n✅ Added: ${added}\n🔁 Already Present: ${alreadyPresent}\n❌ Failed: ${failed}`,
-      event.threadID
-    );
+    return api.sendMessage(`✅ Done! Owner added to ${addedCount} group(s).`, event.threadID);
 
-  } catch (e) {
-    console.error(e);
-    return api.sendMessage("❌ Error while checking groups or adding owner.", event.threadID);
+  } catch (err) {
+    console.error("❌ Main Error:", err.message);
+    return api.sendMessage("❌ Error while checking groups or adding owner. Check console for details.", event.threadID);
   }
 };

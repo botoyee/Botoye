@@ -1,6 +1,6 @@
 module.exports.config = {
   name: "commonwords",
-  version: "1.0.0",
+  version: "1.0.1",
   hasPermssion: 0,
   credits: "Ayan Ali",
   description: "Reply to common phrases in a desi funny style",
@@ -55,10 +55,24 @@ module.exports.handleEvent = async function ({ api, event }) {
       "Pagal to tum lagte ho, bolne ka tareeqa dekho 😒",
       "Aree bhai pagal nahi, sirf thoda offbeat hai 🤪",
       "Main pagal? Tere jaise hazaar dekhe hain 😂"
+    ],
+    "good morning": [
+      "Good morning ho gayi, uth ke chai bana 😴☕",
+      "Subah subah kisne tang kiya bhai 😒",
+      "Good morning! Ab naashta bhi bhej do 🍳🥖"
+    ],
+    "good afternoon": [
+      "Good afternoon? Ab to neend aa rahi hai 😴",
+      "Dupahar ka waqt hai, let jao aur chat karo 😌",
+      "Good afternoon! Bhook lagi hai, kuch khilao 🍛"
+    ],
+    "good night": [
+      "Good night kehne se pehle ludo khel lo 😁",
+      "Soti raho sapne mein bot bhi ayega 🤖💤",
+      "Achi neend aye, kal phir tang karna 😅🌙"
     ]
   };
 
-  // Loop through keys and check if any phrase matches in message
   for (const phrase in replies) {
     if (msg.includes(phrase)) {
       const randomReply = replies[phrase][Math.floor(Math.random() * replies[phrase].length)];

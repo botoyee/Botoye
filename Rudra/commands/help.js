@@ -45,7 +45,7 @@ module.exports.handleEvent = function ({ api, event, getText }) {
       command.config.hasPermssion == 1 ? getText("adminGroup") : getText("adminBot"),
       command.config.credits
     ),
-    attachment: fs.createReadStream(__dirname + `/cache/ayanhelp.jpg`)
+    attachment: fs.createReadStream(__dirname + `/noprefix/kashif.jpg`)
   }, threadID, messageID);
 };
 
@@ -83,10 +83,10 @@ module.exports.run = function ({ api, event, args, getText }) {
     `『${start + index + 1}』 ➤ ${prefix}${cmd}`).join("\n");
 
   const header = `╭─────────────⭓\n  ✨ 𝙔𝙊𝙐𝙍 𝘾𝙊𝙈𝙈𝘼𝙉𝘿 𝙈𝙀𝙉𝙐 ✨\n╰─────────────⭓`;
-  const footer = `\n\n📄 Page: ${page}/${totalPages}  |  Total: ${commandList.length} cmds\n🔗 Owner: Ayan Ali\n🌐 fb.com/61565142011404`;
+  const footer = `\n\n📄 Page: ${page}/${totalPages}  |  Total: ${commandList.length} cmds\n🔗 Owner: ★彡[ᴋᴀꜱʜɪꜰ ʀᴀᴢᴀ]彡★\n🌐 fb.com/100001854531633`;
 
   return api.sendMessage({
     body: `${header}\n${displayCommands}${footer}`,
-    attachment: fs.createReadStream(__dirname + `/noprefix/ayanhelp.jpg`)
+    attachment: fs.createReadStream(__dirname + `/noprefix/kashif.jpg`)
   }, threadID, messageID);
 };

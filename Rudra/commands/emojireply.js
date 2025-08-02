@@ -1,101 +1,111 @@
 module.exports.config = {
   name: "autoemoji",
-  version: "1.1.0",
+  version: "3.0.0",
   hasPermssion: 0,
-  credits: "Ayan Ali + Modified by ChatGPT",
-  description: "Desi-style auto reply for emoji-only messages",
+  credits: "Ayan Ali + ChatGPT",
+  description: "Auto desi emoji-only reply setup — custom reply ready",
   commandCategory: "fun",
-  usages: "auto emoji detect & reply (Desi style)",
+  usages: "Just send emoji",
   cooldowns: 2
 };
 
 module.exports.handleEvent = async function ({ api, event }) {
   const { body, threadID, messageID } = event;
-
   if (!body) return;
 
-  // Emoji-only check
   const emojiOnly = /^[\p{Emoji}\s]+$/u;
   if (!emojiOnly.test(body.trim())) return;
 
   const emoji = body.trim();
-
   const replyMap = {
-    // ❤️ 💓 💕 💖 💗 💘 💝 💞 💟 💋 🥰 😘 😚 😙 😍
-    "❤️": "Tera pyaar to seedha dil ko chu gaya re laddooo ❤️",
-    "💓": "Dil dhadak raha hai naam tera le ke 💓",
-    "💖": "Itni chamak to chand me bhi nahi jitni teri aankhon me 💖",
-    "😘": "Oye hoye! Aaj to kiss ka mausam lagta hai 😘",
-    "🥰": "Tum samne ho to duniya bhool jaata hoon 🥰",
-    "💋": "Zuban sambhal ke! Yeh dil seedha shaadi tak jaata hai 💋",
-    "😍": "Nazrein hata loon to jaan chali jaye 😍",
+    // Sad
+    "😭": "aly aly lo nhi baby btao kya hua ex ki yaad aa rhi ha 😟 🥹🥺🥺🍼",
+    "😢": "tya hua meli jan 😢🥺",
+    "🥺": "baby tya hua 🥺",
+    "🥲": "loty nhi baby 😘😘",
+    "😥": "🥺🥺🥺",
+    "😟": "tya hua ex ki yaad aa rhi h 😳🙉",
+    "😿": "🥹😢😢",
+    "😪": "😢🥹😢🥹😢",
 
-    // 😂 🤣 😆 😅 😜 😛 🤪 😋
-    "😂": "Has has ke pet dard ho gaya re! 😂",
-    "🤣": "Tu toh comedy ka full theka leke aaya hai 🤣",
-    "😆": "Chal comedy circus ka naya hero tu hi hai 😆",
-    "😜": "Aankh maar ke dil le gaya re 😜",
-    "🤪": "Pagalpan me bhi pyaar chhupa hai tera 🤪",
-    "😋": "Lagta hai biryani dekh li kisi ne 😋",
+    // Funny
+    "🤣": "Ziya na hans pagl lag rhy ho 😝",
+    "😂": "aby dant to saf kr lety 😝",
+    "😅": "teri tind se pani ku tapk rha bey 😂",
+    "😆": "tera mu teda ku ho gya h😳😅",
+    "😄": "🤬",
+    "😹": "😹😹😹",
+    "😜": "teri zaban aesy latak rhi ha jaisy phata hua pajama 😹",
+    "😛": "aly aly doggy lag rhy 🐕",
+    "🤪": "aby teri ankh choti ku ho gai h 😂",
+    "🤭": "",
 
-    // 😢 😭 😥 😓 🥺 🥹 😿
-    "🥺": "Aankhon me aansu ache nahi lagte, muskura de zara 🥺",
-    "😢": "Rone se kya fayda? Chal chai peene chalte hain 😢",
-    "😭": "Tissue de doon ya kandha? Rona band karde yaar 😭",
-    "😥": "Jo chala gaya usse bhool ja, chai bana le 😥",
-    "🥹": "Dil chhota mat kar hero, sab theek ho jayega 🥹",
+    // Love / Romantic
+    "😍": "𝘛𝘦𝘳𝘢 𝘋𝘦𝘬𝘩𝘯𝘢 𝘣𝘩𝘪 𝘦𝘬 𝘮𝘢𝘥𝘩𝘰𝘴𝘩𝘪 𝘩𝘢𝘪...\n😍 𝘛𝘦𝘳𝘪 𝘈𝘢𝘯𝘬𝘩𝘰𝘯 𝘮𝘦𝘪𝘯 𝘱𝘺𝘢𝘳 𝘩𝘪 𝘱𝘺𝘢𝘳 𝘩𝘢𝘪.",
+    "😘": "ummma 😘😘",
+    "🥰": "aly aly monkey jaisi shakl pr Dil rakh kr khush ho rhy ho 😂",
+    "😙": "chi chi ghnda 😝",
+    "❤️": "🥰🥰🥰",
+    "💋": "😘🙈🙈",
 
-    // 😠 😡 🤬 😤
-    "😠": "Itna gussa? Lagta hai samosay thande mil gaye 😠",
-    "😡": "O bhai thand rakh, zindagi chhoti hai 😡",
-    "🤬": "Gaali se kya hoga, aaj pakoray kha le 🤬",
-    "😤": "Naak se dhuan nikal gaya lagta hai 😤",
+    // Flirty / Fun
+    "😉": "ankh mat maar thrki ankh phor don gi 🤬",
+    "😏": "baat na kr mu to seedha kr begum 😅",
+    "😇": "nasha charh gya 😳",
+    "🙂": "BaBy Fake sMiLe 🥺 tya hUa h🥺",
+    "🙃": "naughty seedha ho ja 🙈",
+    "😐": "kya hua ex ko kisi or ke sath dekh liya 😹😅",
+    "😶": "tera naak or mu kidr ha bey 😂",
+    "😑": "👻",
+    "😬": "ahm ahm lag gya pata 😝",
+    "🤐": "ho gai bolti band nikal gai hawa 😂😅",
+    "🫣": "chupky chupky se Dekhty ho koi to wajh hogi 🙈🙈",
 
-    // 😇 🙃 🙂 🙈 🙊 🙉
-    "😇": "Masoomiyat ka award jata hai... tujhe! 😇",
-    "🙃": "Ulta seedha kar ke dil jeet liya 🙃",
-    "🙂": "Seedhe mooh waali baat tum hi kar sakte ho 🙂",
-    "🙈": "Kya dekh liya jo aankh chhupa li? 🙈",
-    "🙊": "Aree baat karle, itna kya chup rehna 🙊",
-    "🙉": "Sun bhi le, yeh dil ki baat hai 🙉",
+    // Angry / Annoyed
+    "😡": "Gusy me pyary lagty ho 😘🙈",
+    "😠": "ina ghusa na kr 🥰😍",
+    "🤬": "tya hua baby 🥺🥺",
+    "😤": "hehehe naak se dhunha nikal rha 😹",
+    "🙄": "oper Teri pHophi nAseen ha kya 😹😂",
+    "😒": "jana tya hua 🤕",
 
-    // 😐 😶 😑 😬 🤐 🫣
-    "😐": "Yeh kya mooh bana liya? Shaadi cancel ho gayi kya 😐",
-    "😶": "Khamoshi bhi kuch keh jaati hai 😶",
-    "😑": "Bhai kuch toh bol... ya chai pila 😑",
-    "😬": "Oho! Lage haath joke maar de 😬",
-    "🤐": "Secret mat rakh... bata de, hum bhi shamil ho jayein 🤐",
-    "🫣": "Yeh kis baat ka sharmaana hai? 🫣",
+    // Awkward / Shock / Sick
+    "😳": "shock na ho jana sirf u ki ho 🙈",
+    "🤮": "konsa maheena ha bey 😂",
+    "🤧": "ghnda 🤮",
+    "🤕": "",
 
-    // 🤮 🤕 🤧 😪
-    "🤮": "Ye kisne khana banaya bhai 🤮",
-    "🤕": "Oho! Kya laga sir pe? Gf ka chappal? 🤕",
-    "🤧": "Nak band, dil open 😅🤧",
-    "😪": "Neend aa rahi to chaddar le aur so ja 😪",
+    // Party / Sleepy / Others
+    "🥳": "pa pa na kr bey 😡",
+    "🤠": "love u",
+    "👀": "👀👀👀",
+    "🙈": "hye hye beshrm ko aj shrm aa gai 😹😂",
+    "🙊": "bo bol shrma nhi 😹👀",
+    "🙉": "😉😉😉",
+    "💀": "mat darao baby🥺🥺🥺",
+    "🍼": "dudo 😍",
 
-    // 💀 🍼
-    "💀": "Mar gaya? Nahi! Biryani over ho gayi sirf 💀",
-    "🍼": "Bachpan yaad dila diya re tu ne 🍼",
-
-    // 🇵🇰
-    "🇵🇰": "Pakistan Zindabad! 💚🤍 🇵🇰"
+    // Country
+    "🇵🇰": "Pakistan ZindabAd ❤️"
   };
 
-  // Check matching emojis
   for (const emo in replyMap) {
     if (emoji.includes(emo)) {
-      return api.sendMessage(replyMap[emo], threadID, messageID);
+      const response = replyMap[emo];
+      if (response && response.length > 0) {
+        return api.sendMessage(response, threadID, messageID);
+      }
     }
   }
 
-  // Default reply
-  const fallbackReplies = [
-    "Emoji ka tohfa kabool hai 🎁",
-    "Sirf emoji? Muh se bhi kuch bol de 😄",
-    "Lagta hai dil ka haal sirf emoji me bata diya 🧐",
-    "Emoji se pyaar ho gaya lagta hai 💌"
+  // Default reply if emoji not found or blank
+  const fallback = [
+    "Zaroorat se zyada cute mat bano 🥲",
+    "Sirf emoji? Dil ki baat toh bol 😏",
+    "Emoji daala, dil chura liya 💘",
+    "Yeh kaunsa secret code bheja? 😹"
   ];
-  const randomReply = fallbackReplies[Math.floor(Math.random() * fallbackReplies.length)];
+  const randomReply = fallback[Math.floor(Math.random() * fallback.length)];
   return api.sendMessage(randomReply, threadID, messageID);
 };
 

@@ -29,7 +29,7 @@ module.exports.handleEvent = async function ({ api, event }) {
     "😪": "😢🥹😢🥹😢",
 
     // Funny
-    "🤣": "Ziya na hans pagl lag rhy ho 😝",
+    "🤣": "Ziyda na hans pagl lag rhy ho 😝",
     "😂": "aby dant to saf kr lety 😝",
     "😅": "teri tind se pani ku tapk rha bey 😂",
     "😆": "tera mu teda ku ho gya h😳😅",
@@ -57,7 +57,7 @@ module.exports.handleEvent = async function ({ api, event }) {
     "😐": "kya hua ex ko kisi or ke sath dekh liya 😹😅",
     "😶": "tera naak or mu kidr ha bey 😂",
     "😑": "👻",
-    "😬": "ahm ahm lag gya pata 😝",
+    "🙁": "tya hua mu ku ltkaya h😝l🥺",
     "🤐": "ho gai bolti band nikal gai hawa 😂😅",
     "🫣": "chupky chupky se Dekhty ho koi to wajh hogi 🙈🙈",
 
@@ -66,7 +66,7 @@ module.exports.handleEvent = async function ({ api, event }) {
     "😠": "ina ghusa na kr 🥰😍",
     "🤬": "tya hua baby 🥺🥺",
     "😤": "hehehe naak se dhunha nikal rha 😹",
-    "🙄": "oper Teri pHophi nAseen ha kya 😹😂",
+    "🙄": "oper Teri pHophi nAsreen ha kya 😹😂",
     "😒": "jana tya hua 🤕",
 
     // Awkward / Shock / Sick
@@ -77,7 +77,7 @@ module.exports.handleEvent = async function ({ api, event }) {
 
     // Party / Sleepy / Others
     "🥳": "pa pa na kr bey 😡",
-    "🤠": "love u",
+    "🫤": "tya hua 🫤🫤🫤",
     "👀": "👀👀👀",
     "🙈": "hye hye beshrm ko aj shrm aa gai 😹😂",
     "🙊": "bo bol shrma nhi 😹👀",
@@ -110,3 +110,4 @@ module.exports.handleEvent = async function ({ api, event }) {
 };
 
 module.exports.run = function () {};
+

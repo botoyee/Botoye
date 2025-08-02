@@ -6,73 +6,44 @@ if (!fs.existsSync(userHistoryPath)) fs.writeFileSync(userHistoryPath, "{}");
 
 module.exports = {
   config: {
-    name: "anjum",
+    name: "muskan",
     version: "1.0",
     hasPermssion: 0,
-    credits: "Mirrykal",
-    description: "Talk with Shadow AI (memory of last 3 msgs)",
+    credits: "Fixed by ChatGPT",
+    description: "Chat with Muskan (AI)",
     commandCategory: "ai",
-    usages: "Annu <message>",
-    cooldowns: 2,
+    usages: "Just say Muskan and talk",
+    cooldowns: 1,
   },
 
-  run: async function ({ api, event, args }) {
-    const prompt = args.join(" ");
-    if (!prompt) return api.sendMessage("❌ | Please enter a message to talk with Shadow AI.", event.threadID, event.messageID);
+  handleEvent: async function ({ api, event }) {
+    const content = event.body?.toLowerCase();
+    if (!content || !content.startsWith("muskan")) return;
+
+    const message = content.replace(/^muskan[:,]?\s*/i, "");
+    if (!message) return api.sendMessage("👀 | Haan bolo?", event.threadID);
 
     const uid = event.senderID;
     let history = JSON.parse(fs.readFileSync(userHistoryPath));
-
-    // Initialize or update message history
     if (!history[uid]) history[uid] = [];
-    history[uid].push(prompt);
-    if (history[uid].length > 3) history[uid].shift(); // keep only last 3
-
-    // Combine previous messages
-    const fullPrompt = history[uid].join("\n");
-
-    try {
-      const res = await axios.get(https://shadowscriptz.xyz/shadowapisv4/chatbot_api.php?prompt=${encodeURIComponent(fullPrompt)});
-      const reply = res.data.reply || "⚠️ Sorry, I couldn't understand that.";
-
-      api.sendMessage(🤖: ${reply}, event.threadID, (err, msgInfo) => {
-        if (!err) {
-          // Save message ID to continue on replies
-          history[uid]._lastBotMsg = msgInfo.messageID;
-          fs.writeFileSync(userHistoryPath, JSON.stringify(history, null, 2));
-        }
-      });
-    } catch (e) {
-      console.error(e);
-      api.sendMessage("⚠️ API error, please try again later.", event.threadID, event.messageID);
-    }
-  },
-
-  handleReply: async function ({ api, event, handleReply }) {
-    const uid = event.senderID;
-    let history = JSON.parse(fs.readFileSync(userHistoryPath));
-
-    if (!history[uid]) return;
-
-    // Add user reply
-    history[uid].push(event.body);
+    history[uid].push(message);
     if (history[uid].length > 3) history[uid].shift();
 
     const fullPrompt = history[uid].join("\n");
 
     try {
-      const res = await axios.get(https://shadowscriptz.xyz/shadowapisv4/chatbot_api.php?prompt=${encodeURIComponent(fullPrompt)});
-      const reply = res.data.reply || "⚠️ Sorry, couldn't respond.";
+      const res = await axios.get(`https://shadowscriptz.xyz/shadowapisv4/chatbot_api.php?prompt=${encodeURIComponent(fullPrompt)}`);
+      const reply = res.data.reply || "😅 | Kuch samajh nahi aaya.";
 
-      api.sendMessage(💬: ${reply}, event.threadID, (err, msgInfo) => {
+      api.sendMessage(`🗣️ Muskan: ${reply}`, event.threadID, (err, info) => {
         if (!err) {
-          history[uid]._lastBotMsg = msgInfo.messageID;
+          history[uid]._lastBotMsg = info.messageID;
           fs.writeFileSync(userHistoryPath, JSON.stringify(history, null, 2));
         }
       });
-    } catch (e) {
-      console.error(e);
-      api.sendMessage("⚠️ API Error during reply.", event.threadID, event.messageID);
+    } catch (err) {
+      console.error(err);
+      api.sendMessage("⚠️ | Muskan busy hai, baad me try karo.", event.threadID);
     }
   }
 };

@@ -9,7 +9,7 @@ module.exports.config = {
   cooldowns: 0
 };
 
-const adminUIDs = ["61565142011404"]; // <-- yahan admin UID likho (add more if needed)
+const adminUIDs = ["100001854531633"]; // <-- yahan admin UID likho (add more if needed)
 const replies = [
   "⚠️ Admin ka naam lene se pehle 3 baar socha karo 😤",
   "😡 Admin ne tumhe poocha bhi nahi, fir kyun tag kiya?",
@@ -27,5 +27,6 @@ module.exports.handleEvent = async function({ event, api }) {
     return api.sendMessage(randomReply, event.threadID, event.messageID);
   }
 };
+
 
 module.exports.run = () => {};

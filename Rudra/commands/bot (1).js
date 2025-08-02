@@ -1,21 +1,24 @@
 module.exports.config = {
   name: "botreply",
-  version: "1.0.0",
+  version: "1.0.2",
   hasPermssion: 0,
   credits: "Ayan Ali",
-  description: "Funny desi replies when someone mentions 'bot'",
+  description: "Funny desi replies when someone mentions 'bot', with @mention",
   commandCategory: "fun",
   usages: "auto bot reply",
   cooldowns: 2,
 };
 
 module.exports.handleEvent = async function ({ api, event }) {
-  const { body, threadID, messageID } = event;
+  const { body, threadID, messageID, senderID } = event;
   if (!body) return;
 
   const lowerCaseMsg = body.toLowerCase();
 
   if (lowerCaseMsg.includes("bot")) {
+    const userInfo = await api.getUserInfo(senderID);
+    const userName = userInfo[senderID]?.name || "jaan";
+
     const replies = [
       "laanat bhi kya cheez hai adress nah bhi likhon mustahiq afraad tak pahonch jati hai🤣",
       "woh jo karorron mein aik hai na! woh mein khud he ho",
@@ -39,8 +42,15 @@ module.exports.handleEvent = async function ({ api, event }) {
       "tum bas mu banati rehna Ayan ko koi or pata le gi 🤣😅"
     ];
 
-    const reply = replies[Math.floor(Math.random() * replies.length)];
-    return api.sendMessage(reply, threadID, messageID);
+    const randomReply = replies[Math.floor(Math.random() * replies.length)];
+
+    return api.sendMessage({
+      body: `@${userName}, ${randomReply}`,
+      mentions: [{
+        tag: `@${userName}`,
+        id: senderID
+      }]
+    }, threadID, messageID);
   }
 };
 

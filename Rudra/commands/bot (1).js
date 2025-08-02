@@ -39,7 +39,19 @@ module.exports.handleEvent = async function ({ api, event }) {
       "Rishty ke lye 1 dabaye shadi k lye 2 dabaye agr aap shadi shuda hai or dosri shadi krna chahty hai to apni pehli bivi ka gala dabayen🙉🙉🙉🙈😅",
       "Tumahari zulfon mein uljha hwa hai Mohalle ka suljha hwa larka Ayan",
       "Agr tumhara piyaar sacha hota to aaj humara bhi bacha hota🙉😅",
-      "tum bas mu banati rehna Ayan ko koi or pata le gi 🤣😅"
+      "tum bas mu banati rehna Ayan ko koi or pata le gi 🤣😅",
+
+      // Long Urdu Font Replies
+      "جِس دِن مَيں پَيدا ہُوا تھا اُس دِن دُھوپ بَھى شَرما کے چُھپ گَئى تھى 😎🌞",
+      "تِيرى باتيں سُن کے تو دِيواريں بَھى ہَنس ديتى ہَيں، بَندہ تو پِھر بَھى گوشت کا ہَے 😂",
+      "مِيرے تو خَواب بَھى خالى بَرتنوں کى طَرح بَجتے ہَيں 🍲😒",
+      "لَوغ کَہتے ہَيں کے مَيں پاگَل ہُوں، اُنہيں کيا پَتا پاگَل پَن بَھى اِيک فَن ہَے 🎨🤪",
+      "کَبھى کَبھى دِل کَرتا ہَے سَب چُھوڑ چَھاڑ کے سُو جاؤں، پَر پِھر يَاد آتا ہَے کے رَات کا کھَانا اَبھى باقى ہَے 🍛😴",
+      "تُم جَيسے لَوغ مِل جائيں، تو ڈاکٹَر ہَنس کے دَوا بَدل ديتا ہَے 💊😂",
+      "کِسى نَے کَہا مَحبَت مَيں صَبر ضَرورى ہَے، ہَم نَے صَبر کِيا، اَب تَک سِنگل ہَيں 😭❤️",
+      "مِيرے خَواب بَھى اَب کَہتے ہَيں: بَھائى نِيند پُورى کَر لو، کاميابى بَعد مَيں دِيکھ لَين گے 🛏️🥱",
+      "دُنيا کى بَھير مَيں صِرف دو ہِى چيزیں قِيمتى لَگتى ہَيں: سُونا اَور بِيَوى کى خَاموشى 😅🙊",
+      "جِس دِن مِيرا دِماغ چَلا نَا، اُس دِن سَب کا نَاک بَند ہوگا… کِيُوں کے مَيں کھَانے مَيں لَوکى بَنا رَہا ہُوں 🥒🤭"
     ];
 
     const randomReply = replies[Math.floor(Math.random() * replies.length)];

@@ -1,41 +1,70 @@
 const axios = require("axios");
 
-module.exports.config = {
-  name: "ddvideo",
-  version: "1.0",
-  hasPermssion: 0,
-  credits: "Technical Solution",
-  description: "Search videos from Pixabay (multiple results)",
-  commandCategory: "media",
-  usages: "/ddvideo <search term>",
-  cooldowns: 5
-};
+module.exports = {
+  config: {
+    name: "ddvideo",
+    version: "1.0",
+    author: "Technical Solution",
+    description: "Search and send videos using Pixabay",
+    usage: "/ddvideo [search term]",
+    commandCategory: "media",
+    cooldowns: 3
+  },
 
-module.exports.run = async function ({ api, event, args }) {
-  const input = args.join(" ");
-  const threadID = event.threadID;
-  const messageID = event.messageID;
+  onStart: async function ({ api, event, args }) {
+    const search = args.join(" ");
+    if (!search) return api.sendMessage("🔍 *Kya dhoondhna hai?* Example: /ddvideo flowers", event.threadID);
 
-  if (!input) return api.sendMessage("🎬 *Video dhoondhne ke liye kuch likho!*\nMisal: /ddvideo rain", threadID, messageID);
+    const apiKey = "51609285-e2658ec185028d1e56777bd26";
+    const url = `https://pixabay.com/api/videos/?key=${apiKey}&q=${encodeURIComponent(search)}&per_page=5`;
 
-  const apiKey = "51609285-e2658ec185028d1e56777bd26";
+    try {
+      const res = await axios.get(url);
+      const results = res.data.hits;
 
-  try {
-    const res = await axios.get(`https://pixabay.com/api/videos/?key=${apiKey}&q=${encodeURIComponent(input)}&per_page=3`);
-    const results = res.data.hits;
+      if (!results.length) return api.sendMessage("😔 *Kuch bhi nahi mila!* Dusra lafz try karo.", event.threadID);
 
-    if (!results.length) return api.sendMessage("❌ Koi video nahi mili!", threadID, messageID);
+      let msg = "🎥 *Videos Found:*\n\n";
+      global.ddvideoData = {};
 
-    for (const vid of results) {
-      const msg = `📽️ *Video:*\n\n🔍 Tags: ${vid.tags}\n⏱️ Duration: ${vid.duration} sec\n📥 Video: ${vid.videos.medium.url}\n👤 User: ${vid.user}`;
-      await api.sendMessage({
-        body: msg,
-        attachment: await global.utils.getStreamFromURL(vid.videos.medium.thumbnail)
-      }, threadID);
+      results.forEach((video, index) => {
+        msg += `#${index + 1}: ${video.tags}\n👀 Views: ${video.views}\n❤️ Likes: ${video.likes}\n\n`;
+        global.ddvideoData[index + 1] = {
+          url: video.videos.medium.url,
+          title: video.tags,
+          thumbnail: video.videos.medium.thumbnail
+        };
+      });
+
+      msg += "📥 *Reply karo number pe jise bhejna hai.* (e.g., 1)";
+      api.sendMessage(msg, event.threadID, (err, info) => {
+        global.client.handleReply.push({
+          name: this.config.name,
+          messageID: info.messageID,
+          author: event.senderID,
+          type: "video_reply"
+        });
+      });
+    } catch (e) {
+      console.error(e);
+      api.sendMessage("⚠️ *Kuch error aaya. Dobara try karo*", event.threadID);
     }
+  },
 
-  } catch (e) {
-    console.log(e);
-    return api.sendMessage("⚠️ Error: Video hasil karne mein masla hua!", threadID, messageID);
+  handleReply: async function ({ api, event, handleReply }) {
+    if (event.senderID !== handleReply.author) return;
+
+    const num = parseInt(event.body.trim());
+    if (!global.ddvideoData || !global.ddvideoData[num])
+      return api.sendMessage("❌ *Galat number hai. Reply sirf listed number pe karo.*", event.threadID);
+
+    const selected = global.ddvideoData[num];
+
+    const msgData = {
+      body: `🎬 *${selected.title}*\n📽️ Here's your video:`,
+      attachment: await global.utils.getStreamFromURL(selected.url)
+    };
+
+    return api.sendMessage(msgData, event.threadID);
   }
 };

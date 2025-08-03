@@ -1,47 +1,48 @@
 const axios = require("axios");
 
 module.exports.config = {
-  name: "ddpic",
-  version: "2.0",
+  name: "pics",
+  version: "1.0.0",
   hasPermssion: 0,
   credits: "Technical Solution",
-  description: "Search and send 20 images from Pixabay",
+  description: "Search aur send pics",
   commandCategory: "media",
-  usages: "/ddpic <search term>",
+  usages: "/pics <query>",
   cooldowns: 5
 };
 
-module.exports.run = async function ({ api, event, args }) {
-  const input = args.join(" ");
-  const threadID = event.threadID;
-  const messageID = event.messageID;
+module.exports.run = async ({ api, event, args }) => {
+  const query = args.join(" ");
+  if (!query) return api.sendMessage("Bhai, koi search keyword likho.\nMisal: /pics boys dpz", event.threadID, event.messageID);
 
-  if (!input) return api.sendMessage("📸 *Tasveer dhoondhne ke liye koi lafz likho!*\nMisal: /ddpic flowers", threadID, messageID);
-
-  const apiKey = "51609285-e2658ec185028d1e56777bd26";
+  const apiKey = "Skv9vbtjhGy5p9QQWvsweep"; // Apni API Key lagao
+  const url = `https://api.serply.io/v1/search/images?q=${encodeURIComponent(query)}&num=20`;
 
   try {
-    const res = await axios.get(`https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(input)}&per_page=20`);
-    const result = res.data.hits;
+    const res = await axios.get(url, {
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": apiKey
+      }
+    });
 
-    if (!result.length) return api.sendMessage("❌ Koi tasveer nahi mili!", threadID, messageID);
+    const images = res.data.images;
+    if (!images || images.length === 0) {
+      return api.sendMessage("Koi pics nahi mili bhai.", event.threadID, event.messageID);
+    }
 
-    const attachments = await Promise.all(
-      result.map(img => global.utils.getStreamFromURL(img.webformatURL))
-    );
+    const attachments = [];
+    for (const img of images) {
+      const imgRes = await axios.get(img.url, { responseType: "stream" });
+      attachments.push(imgRes.data);
+    }
 
-    let msg = `📸 *${input.toUpperCase()}* ke liye 20 tasveerain mil gayi hain:\n\n`;
-    msg += result.map((img, i) =>
-      `📍 *${i + 1}.* ${img.tags}\n👍 Likes: ${img.likes} | 👤 ${img.user}`
-    ).join("\n\n");
-
-    return api.sendMessage({
-      body: msg,
+    api.sendMessage({
+      body: `Yeh lo bhai, ${images.length} pics mil gayi hain "${query}" ke liye.`,
       attachment: attachments
-    }, threadID, messageID);
-
-  } catch (err) {
-    console.error(err);
-    return api.sendMessage("⚠️ Error: Tasveer hasil karne mein masla hua!", threadID, messageID);
+    }, event.threadID, event.messageID);
+  } catch (e) {
+    console.error(e);
+    api.sendMessage("Error aa gaya bhai, thora baad try karna.", event.threadID, event.messageID);
   }
 };

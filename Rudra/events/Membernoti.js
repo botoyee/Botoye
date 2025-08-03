@@ -1,63 +1,56 @@
-const fs = require("fs");
-const path = require("path");
-
 module.exports.config = {
   name: "memberNoti",
   eventType: ["log:subscribe", "log:unsubscribe"],
-  version: "1.0.0",
-  credits: "Kashif x Ayan",
-  description: "Join/Left notification with poetry and video"
+  version: "1.2",
+  credits: "Kashif Raza",
+  description: "Send welcome/leave messages with poetry and video"
 };
 
-const happyShayari = [
-  "خوشبو کی طرح تیرے استقبال کو آئے ہیں 🌸",
-  "آج ہماری محفل میں چمکتا ستارہ آیا ہے ✨",
-  "تیرا آنا دل کو بہار دے گیا ❤️",
-  "خوش آمدید اے پیارے مہمان 💐",
-  "آؤ بیٹھو دوستو، ایک نیا چہرہ آیا ہے 🌷"
-];
-
-const sadShayari = [
-  "ہم نے تمہیں روز یاد کرنا ہے اب 💔",
-  "تیرا جانا اداسی دے گیا 😢",
-  "رخصت ہوا ایک چمکتا ستارہ 🌙",
-  "دل اداس ہے، تم چلے گئے 🥀",
-  "الوداع... تم یاد آتے رہو گے 🌧️"
-];
+const fs = require("fs");
+const path = require("path");
 
 module.exports.run = async function({ api, event }) {
-  const { threadID, logMessageType, logMessageData } = event;
+  const threadID = event.threadID;
+  const userID = event.logMessageData?.leftParticipantFbId || event.logMessageData?.addedParticipants?.[0]?.userFbId;
+  const userName = event.logMessageData?.leftParticipantFbId
+    ? (await api.getUserInfo(event.logMessageData.leftParticipantFbId))[event.logMessageData.leftParticipantFbId].name
+    : event.logMessageData.addedParticipants[0].fullName;
 
-  try {
-    let userID, userName, msg, videoPath;
+  // Video paths
+  const joinVideo = path.join(__dirname, "commands", "noprefix", "join.mp4");
+  const leftVideo = path.join(__dirname, "commands", "noprefix", "left.mp4");
 
-    if (logMessageType === "log:subscribe") {
-      userID = logMessageData.addedParticipants[0].userFbId;
-      userName = (await api.getUserInfo(userID))[userID].name;
+  // Happy join poetry
+  const happyPoetry = [
+    `*خوش آمدید!*\n\nخوشبو کی طرح تیرے آنے کی خبر آئی ہے،\nمحفل میں جیسے چاندنی بھر آئی ہے 💐✨`,
+    `*دل سے خوش آمدید!*\n\nتیرے آنے سے روشن ہوا ہر اک گوشہ دل کا،\nبزم سجی ہے تیری آمد پر 💖🌙`,
+    `*سلامت رہو!*\n\nتم آئے ہو بہاروں کی طرح،\nخوشبو بن کے فضاؤں میں چھا گئے ہو 🌸🌿`
+  ];
 
-      const randomShayari = happyShayari[Math.floor(Math.random() * happyShayari.length)];
-      msg = `🌸 خوش آمدید ${userName}!\n\n${randomShayari}`;
-      videoPath = path.join(__dirname, "commands", "noprefix", "join.mp4");
+  // Sad left poetry
+  const sadPoetry = [
+    `*الوداع دوست!*\n\nوہ جو چھوڑ گیا ہمیں تنہا،\nیادوں میں اب بس وہی لمحے رہ گئے 😢💔`,
+    `*رخصت کا لمحہ!*\n\nتم چلے گئے ہو تو دل اداس ہے،\nمحفل خالی خالی سی لگتی ہے 🌧️🕊️`,
+    `*بچھڑنے کا غم!*\n\nکبھی ہم ساتھ تھے ہنستے تھے،\nآج صرف خاموشی ہے، اور یادیں 😔🌙`
+  ];
 
-    } else if (logMessageType === "log:unsubscribe") {
-      userID = logMessageData.leftParticipantFbId;
-      userName = (await api.getUserInfo(userID))[userID].name;
-
-      const randomShayari = sadShayari[Math.floor(Math.random() * sadShayari.length)];
-      msg = `💔 الوداع ${userName}...\n\n${randomShayari}`;
-      videoPath = path.join(__dirname, "commands", "noprefix", "left.mp4");
-    }
-
-    if (fs.existsSync(videoPath)) {
-      return api.sendMessage({
-        body: msg,
-        attachment: fs.createReadStream(videoPath)
-      }, threadID);
+  // Send join message
+  if (event.logMessageType === "log:subscribe") {
+    const body = `${userName} خوش آمدید 🌸\n\n${happyPoetry[Math.floor(Math.random() * happyPoetry.length)]}`;
+    if (fs.existsSync(joinVideo)) {
+      api.sendMessage({ body, attachment: fs.createReadStream(joinVideo) }, threadID);
     } else {
-      return api.sendMessage({ body: msg }, threadID);
+      api.sendMessage(body, threadID);
     }
+  }
 
-  } catch (err) {
-    console.log("[❌ memberNoti ERROR]", err);
+  // Send left message
+  if (event.logMessageType === "log:unsubscribe") {
+    const body = `${userName} نے گروپ چھوڑ دیا 😢\n\n${sadPoetry[Math.floor(Math.random() * sadPoetry.length)]}`;
+    if (fs.existsSync(leftVideo)) {
+      api.sendMessage({ body, attachment: fs.createReadStream(leftVideo) }, threadID);
+    } else {
+      api.sendMessage(body, threadID);
+    }
   }
 };

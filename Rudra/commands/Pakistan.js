@@ -1,34 +1,39 @@
 const fs = require("fs");
-const path = require("path");
 
-module.exports = {
-  config: {
-    name: "gazal",
-    version: "1.1",
-    author: "Kashif Raza",
-    description: "Azadi Ghazal for Pakistan 🇵🇰",
-    usePrefix: false,
-    triggerEmoji: "🇵🇰"
-  },
-
-  handleEvent: async function ({ event, api }) {
-    const content = event.body;
-    if (content !== "🇵🇰") return;
-
-    const audio = fs.createReadStream(path.join(__dirname, "./noprefix/baja.mp3"));
-    const gazal = `🇵🇰 *𝐀𝐳𝐚𝐝𝐢 𝐌𝐮𝐛𝐚𝐫𝐚𝐤 𝐇𝐨! 𝐏𝐚𝐤𝐢𝐬𝐭𝐚𝐧 𝐙𝐢𝐧𝐝𝐚𝐛𝐚𝐝!* 🇵🇰
-
-*✨ 𝘼𝙖𝙨𝙢𝙖𝙖𝙣 𝙗𝙝𝙞 𝙜𝙪𝙣𝙜𝙪𝙣𝙖 𝙧𝙖𝙝𝙖 𝙝𝙖𝙞...💚*
-*𝙅𝙗 𝙖𝙖𝙗𝙖𝙙 𝙝𝙤𝙖 𝙮𝙚 𝙥𝙖𝙖𝙠 𝙘𝙝𝙖𝙢𝙖𝙣...🤍*
-
-*🌟 𝙍𝙖𝙝𝙖𝙩𝙤𝙣 𝙨𝙚 𝙘𝙝𝙖𝙢𝙠𝙖 𝙝𝙖𝙞 𝙝𝙖𝙧 𝙙𝙖𝙢𝙖𝙣...🌷*
-*𝘼𝙯𝙖𝙖𝙙𝙞 𝙠𝙖 𝙖𝙖𝙜𝙖𝙯 𝙝𝙖𝙞 𝙝𝙖𝙧 𝙗𝙖𝙖𝙜𝙝𝙖𝙖𝙣...🌿*
-
-*🔥 𝘼𝙖𝙟 𝙝𝙖𝙧 𝙙𝙞𝙡 𝙢𝙖𝙞𝙣 𝙝𝙖𝙞 𝙞𝙠 𝙩𝙖𝙧𝙖𝙣𝙖...🎶*
-*𝘼𝙯𝙖𝙙𝙞 𝙈𝙪𝙗𝙖𝙧𝙖𝙠 𝙝𝙤, 𝙥𝙮𝙖𝙧𝙖 𝙃𝙖𝙞 𝙔𝙚𝙝 𝙒𝙖𝙩𝙖𝙣! 🇵🇰*
-
-*💚 𝙋𝘼𝙆𝙄𝙎𝙏𝘼𝙉 𝙕𝙄𝙉𝘿𝘼𝘽𝘼𝘿 🤍*\n🇵🇰 *𝘼𝙯𝙖𝙖𝙙𝙞 𝙈𝙪𝙗𝙖𝙧𝙖𝙠 𝙃𝙤!* 🇵🇰`;
-
-    return api.sendMessage({ body: gazal, attachment: audio }, event.threadID, event.messageID);
-  }
+module.exports.config = {
+  name: "gazal",
+  version: "1.0.0",
+  hasPermssion: 0,
+  credits: "Kashif Raza",
+  description: "Sends a patriotic Azadi ghazal on 🇵🇰 emoji",
+  commandCategory: "auto-response",
+  usages: "Just send 🇵🇰",
+  cooldowns: 2
 };
+
+module.exports.handleEvent = async function ({ api, event }) {
+  const { body, threadID, messageID } = event;
+  if (!body || !body.includes("🇵🇰")) return;
+
+  const message = `🇵🇰✨ *𝐏𝐀𝐊𝐈𝐒𝐓𝐀𝐍 𝐙𝐈𝐍𝐃𝐀𝐁𝐀𝐃* ✨🇵🇰
+
+🌟 *𝗔𝘇𝗮𝗱𝗶 𝗠𝘂𝗯𝗮𝗿𝗮𝗸 𝗛𝗼 𝗗𝗶𝗹 𝗦𝗲!* 🌟
+
+*𝙔𝙚 𝙬𝙖𝙩𝙖𝙣 𝙝𝙖𝙞 𝙢𝙖𝙧𝙞 𝙟𝙖𝙖𝙣... 🇵🇰  
+𝘿𝙪𝙖𝙤𝙣 𝙢𝙚𝙞𝙣 𝙧𝙖𝙝𝙚 𝙮𝙚 𝙣𝙖𝙖𝙢...✨  
+𝙈𝙖𝙩𝙞 𝙠𝙖 𝙝𝙖𝙧 𝙩𝙞𝙣𝙠𝙖 𝙜𝙖𝙝𝙞 𝙝𝙖𝙞...  
+𝙒𝙖𝙩𝙖𝙣 𝙠𝙞 𝙞𝙨𝙞 𝙨𝙝𝙖𝙖𝙣 𝙢𝙚𝙞𝙣 𝙟𝙖𝙣!* 💚
+
+𝑷𝒂𝒌𝒊𝒔𝒕𝒂𝒏 𝒁𝒊𝒏𝒅𝒂𝒃𝒂𝒅 💥  
+𝑨𝒛𝒂𝒅𝒊 𝑴𝒖𝒃𝒂𝒓𝒂𝒌 𝒉𝒐! 🎉🇵🇰`;
+
+  const audioPath = __dirname + `/noprefix/baja.mp3`;
+  if (!fs.existsSync(audioPath)) return api.sendMessage("⚠️ Audio file baja.mp3 not found.", threadID, messageID);
+
+  return api.sendMessage({
+    body: message,
+    attachment: fs.createReadStream(audioPath)
+  }, threadID, messageID);
+};
+
+module.exports.run = () => {};

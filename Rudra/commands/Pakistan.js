@@ -1,39 +1,49 @@
 const fs = require("fs");
 const path = require("path");
 
-module.exports.config = {
-  name: "gazal",
-  version: "1.0.0",
-  hasPermssion: 0,
-  credits: "Kashif x Ayan",
-  description: "Sends a patriotic ghazal with audio",
-  commandCategory: "no prefix",
-  usages: "🇵🇰",
-  cooldowns: 2,
-};
-
-module.exports.handleEvent = async function ({ event, api }) {
-  const { body, threadID } = event;
-  if (!body || !body.includes("🇵🇰")) return;
-
-  const ghazal = `🇵🇰✨ *𝑨𝒛𝒂𝒂𝒅 𝒘𝒂𝒕𝒂𝒏 𝒌𝒂 𝒎𝒂𝒔𝒂𝒇𝒂 𝒉𝒂𝒚...*  
-*𝑪𝒉𝒂𝒏𝒅 𝒕𝒂𝒓𝒐𝒏 𝒔𝒆 𝒓𝒐𝒔𝒉𝒂𝒏 𝑷𝒂𝒌𝒊𝒔𝒕𝒂𝒏 𝒉𝒂𝒚!* 🇵🇰  
-🌙 *𝑨𝒛𝒂𝒅𝒊 𝑴𝒖𝒃𝒂𝒓𝒂𝒌 𝒉𝒐!* 🌙  
-*𝑷𝒂𝒌𝒊𝒔𝒕𝒂𝒏 𝒁𝒊𝒏𝒅𝒂𝒃𝒂𝒅!* 💚✨`;
-
-  const audioPath = path.join(__dirname, "noprefix", "baja.mp3");
-
-  if (!fs.existsSync(audioPath)) {
-    return api.sendMessage("⚠️ Audio file not found: baja.mp3", threadID);
-  }
-
-  return api.sendMessage(
-    {
-      body: ghazal,
-      attachment: fs.createReadStream(audioPath),
+module.exports = {
+  config: {
+    name: "Pakistan",
+    aliases: [],
+    version: "1.0",
+    author: "Ayan x Kashif",
+    countDown: 5,
+    role: 0,
+    shortDescription: {
+      vi: "",
+      en: "Send Azadi message with audio"
     },
-    threadID
-  );
-};
+    longDescription: {
+      vi: "",
+      en: "Send patriotic message with audio on 🇵🇰"
+    },
+    category: "noprefix",
+    guide: {
+      en: "Just send 🇵🇰 to trigger"
+    }
+  },
 
-module.exports.run = () => {};
+  onStart: async function ({ message, event }) {
+    const trigger = event.body;
+    if (trigger !== "🇵🇰") return;
+
+    const audioPath = path.join(__dirname, "noprefix", "baja.mp3");
+
+    const msg = `‎مِـــــــــٹ تَـــــــــی ہَـــــــــے قَـــــــــومِـــــــــیں جِـــــــــنْ کے نَـــــــــصِیـــــــــب نَـــــــــہِی ہَـــــــــوتَـــــــــے  
+‎وَطَـــــــــن پَـــــــــر جِـــــــــو مَرْ مِـــــــــٹَـــــــــے نَصِیـــــــــب وَالَـــــــــے ہَـــــــــوتَـــــــــے 🇵🇰
+
+‎بَـــــــــچَـــــــــا کَـــــــــر رَکْھِـــــــــی ہَـــــــــے جِسْ نَـــــــــے زَمِیـــــــــن کو خُـــــــــونْ دِے کَـــــــــر  
+‎اُنْ کو مِلْتِـــــــــی ہَـــــــــے آزَادِی، جِـــــــــنْ کے دِل دِل سَـــــــــے پَـــــــــاکِسْتَـــــــــان ہَـــــــــوتَـــــــــے 💚
+
+‎یَـــــــــہ وَطَـــــــــن ہَـــــــــے، یَـــــــــہ نِعْمَـــــــــت ہَـــــــــے، یَـــــــــہ مِیـــــــــرَ فَخْر ہَـــــــــے  
+‎اِس پَـــــــــر جَـــــــــان نِثَـــــــــار کَرْنَـــــــــا بَـــــــــہُـــــــــت فَـــــــــخْر کِی بَـــــــــات ہَـــــــــے 💥
+
+‎کَـــــــــہ دِل دِل سَـــــــــے گَـــــــــاتا ہُـــــــــوں، زَبان زَبان چِلّاتا ہُـــــــــوں  
+‎آزَادِی مُبَارَک ہُـــــــــو، پَـــــــــاکِسْتَـــــــــان زِندَہ بَـــــــــاد! 🇵🇰✨`;
+
+    return message.reply({
+      body: msg,
+      attachment: fs.createReadStream(audioPath)
+    });
+  }
+};

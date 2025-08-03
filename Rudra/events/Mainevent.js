@@ -1,123 +1,73 @@
-const fs = require("fs");
-const moment = require("moment-timezone");
-const path = require("path");
+const fs = require("fs"); const path = require("path"); const moment = require("moment-timezone");
 
-let lastPoetryTime = 0;
-let lastQuoteTime = 0;
-let lastQuranTime = { morning: 0, night: 0 };
+module.exports = { config: { name: "mainEvent", version: "1.0", author: "Kashif Raza", description: "All-in-one: Greetings + Namaz Alerts + Islamic Quotes + Quran Ayat + Join/Left Poetry", eventType: ["log:subscribe", "log:unsubscribe"], },
 
-const poetry = require("./poetry.json");
-const quotes = require("./quotes.json");
-const quranAyat = require("./quranAyat.json");
+onLoad: function () { if (!global.mainEventInterval) { global.mainEventInterval = setInterval(async () => { const now = moment().tz("Asia/Karachi"); const hour = now.hour();
 
-const joinVid = fs.existsSync(path.join(__dirname, "../commands/noprefix/join.mp4")) ? fs.createReadStream(path.join(__dirname, "../commands/noprefix/join.mp4")) : null;
-const leftVid = fs.existsSync(path.join(__dirname, "../commands/noprefix/left.mp4")) ? fs.createReadStream(path.join(__dirname, "../commands/noprefix/left.mp4")) : null;
-
-module.exports = {
-  config: {
-    name: "mainEvent",
-    version: "2.0",
-    author: "Kashif x Ayan",
-    description: "All-in-one: join/leave + hourly quote + poetry + Quran + Namaz",
-    dependencies: []
-  },
-
-  async onLoad({ api }) {
-    const interval = setInterval(async () => {
-      const now = moment().tz("Asia/Karachi");
-      const hour = now.hour();
-      const minute = now.minute();
-      const currentTime = Date.now();
-
-      // 1. Send Poetry every 2 hours
-      if (currentTime - lastPoetryTime >= 2 * 60 * 60 * 1000) {
-        lastPoetryTime = currentTime;
-        const rand = poetry[Math.floor(Math.random() * poetry.length)];
-        const threads = await api.getThreadList(100, null, ["INBOX"]);
-        for (const thread of threads) {
-          if (thread.isGroup) {
-            api.sendMessage(rand, thread.threadID);
-          }
-        }
-      }
-
-      // 2. Send Islamic Quote every hour
-      if (currentTime - lastQuoteTime >= 60 * 60 * 1000) {
-        lastQuoteTime = currentTime;
-        const rand = quotes[Math.floor(Math.random() * quotes.length)];
-        const threads = await api.getThreadList(100, null, ["INBOX"]);
-        for (const thread of threads) {
-          if (thread.isGroup) {
-            api.sendMessage(rand, thread.threadID);
-          }
-        }
-      }
-
-      // 3. Morning & Night Quranic Ayat
-      const hourNow = now.hour();
-      const isMorning = hourNow >= 6 && hourNow <= 9;
-      const isNight = hourNow >= 20 && hourNow <= 23;
-
-      if (isMorning && currentTime - lastQuranTime.morning > 6 * 60 * 60 * 1000) {
-        lastQuranTime.morning = currentTime;
-        const ayah = quranAyat[Math.floor(Math.random() * quranAyat.length)];
-        const threads = await api.getThreadList(100, null, ["INBOX"]);
-        for (const thread of threads) {
-          if (thread.isGroup) {
-            api.sendMessage(`📖 *Subah Ki Ayat:*\n${ayah}`, thread.threadID);
-          }
-        }
-      }
-
-      if (isNight && currentTime - lastQuranTime.night > 6 * 60 * 60 * 1000) {
-        lastQuranTime.night = currentTime;
-        const ayah = quranAyat[Math.floor(Math.random() * quranAyat.length)];
-        const threads = await api.getThreadList(100, null, ["INBOX"]);
-        for (const thread of threads) {
-          if (thread.isGroup) {
-            api.sendMessage(`🌙 *Raat Ki Ayat:*\n${ayah}`, thread.threadID);
-          }
-        }
-      }
-
-      // 4. Namaz Alerts (simple version)
-      if (minute === 0 && [5, 13, 16, 18, 20].includes(hour)) {
-        const threads = await api.getThreadList(100, null, ["INBOX"]);
-        const namazMap = {
-          5: "🌅 Fajr ka waqt ho gaya hai!",
-          13: "🌞 Zuhr ka waqt ho gaya hai!",
-          16: "🌤 Asr ka waqt ho gaya hai!",
-          18: "🌇 Maghrib ka waqt ho gaya hai!",
-          20: "🌙 Isha ka waqt ho gaya hai!"
-        };
-        for (const thread of threads) {
-          if (thread.isGroup) {
-            api.sendMessage(namazMap[hour], thread.threadID);
-          }
-        }
-      }
-    }, 60 * 1000); // Every 1 minute
-  },
-
-  async run({ event, api }) {
-    const { threadID, logMessageType, logMessageData } = event;
-
-    if (logMessageType === "log:subscribe") {
-      const name = logMessageData.addedParticipants[0]?.fullName || "Ek naye member";
-      const poetryLine = poetry[Math.floor(Math.random() * poetry.length)];
-      api.sendMessage({
-        body: `✨ *Welcome ${name}!* \n\n${poetryLine}`,
-        attachment: fs.createReadStream(path.join(__dirname, "../commands/noprefix/join.mp4"))
-      }, threadID);
+// Send hourly Islamic quote
+    if (hour !== global.lastQuoteHour) {
+      global.lastQuoteHour = hour;
+      sendRandomQuote();
     }
 
-    if (logMessageType === "log:unsubscribe") {
-      const name = event.logMessageData.leftParticipantFbId === event.senderID ? "Kisi ne" : "Ek member ne";
-      const poetryLine = poetry[Math.floor(Math.random() * poetry.length)];
-      api.sendMessage({
-        body: `😢 *${name} group chorr gaya...*\n\n${poetryLine}`,
-        attachment: fs.createReadStream(path.join(__dirname, "../commands/noprefix/left.mp4"))
-      }, threadID);
+    // Send poetry every 2 hours
+    if (hour % 2 === 0 && hour !== global.lastPoetryHour) {
+      global.lastPoetryHour = hour;
+      sendPoetry();
     }
-  }
-};
+
+    // Namaz alerts
+    const namazTimes = {
+      5: "Fajr 🕌",
+      12: "Zuhar 🕌",
+      15: "Asar 🕌",
+      18: "Maghrib 🕌",
+      20: "Isha 🕌",
+    };
+    if (namazTimes[hour] && hour !== global.lastNamazHour) {
+      global.lastNamazHour = hour;
+      sendNamazAlert(namazTimes[hour]);
+    }
+
+    // Quran Ayat Morning (8AM) and Night (10PM)
+    if ((hour === 8 || hour === 22) && hour !== global.lastAyatHour) {
+      global.lastAyatHour = hour;
+      sendQuranAyat();
+    }
+  }, 60 * 1000);
+}
+
+},
+
+run: async function ({ api, event }) { const { threadID, logMessageType, logMessageData } = event;
+
+// Join event
+if (logMessageType === "log:subscribe") {
+  const name = logMessageData.addedParticipants[0]?.fullName || "Member";
+  const video = fs.createReadStream(path.join(__dirname, "../commands/noprefix/join.mp4"));
+  const poetry = getRandomPoetry("happy");
+  api.sendMessage({ body: `𝘞𝘦𝘭𝘤𝘰𝘮𝘦 ${name} 🎉\n\n${poetry}`, attachment: video }, threadID);
+}
+
+// Left event
+if (logMessageType === "log:unsubscribe") {
+  const name = event.logMessageData?.leftParticipantName || "Member";
+  const video = fs.createReadStream(path.join(__dirname, "../commands/noprefix/left.mp4"));
+  const poetry = getRandomPoetry("sad");
+  api.sendMessage({ body: `𝘈𝘭𝘸𝘪𝘥𝘢 ${name} 💔\n\n${poetry}`, attachment: video }, threadID);
+}
+
+}, };
+
+// Utility Functions
+
+function sendRandomQuote() { const quotes = JSON.parse(fs.readFileSync(path.join(__dirname, "./quotes.json"))); const random = quotes[Math.floor(Math.random() * quotes.length)]; global.api.getThreadList(10, null, ["INBOX"], (err, data) => { for (const thread of data) { global.api.sendMessage(📖 𝗜𝘀𝗹𝗮𝗺𝗶𝗰 𝗤𝘂𝗼𝘁𝗲:\n\n${random}, thread.threadID); } }); }
+
+function sendNamazAlert(namazName) { global.api.getThreadList(10, null, ["INBOX"], (err, data) => { for (const thread of data) { global.api.sendMessage(🕌 𝗡𝗮𝗺𝗮𝘇 𝗔𝗹𝗲𝗿𝘁:\n\nIt's time for ${namazName}.\nOffer your Salah with sincerity!, thread.threadID); } }); }
+
+function sendPoetry() { const poetryData = JSON.parse(fs.readFileSync(path.join(__dirname, "./poetry.json"))); const allPoetry = [...poetryData.happy, ...poetryData.sad]; const random = allPoetry[Math.floor(Math.random() * allPoetry.length)]; global.api.getThreadList(10, null, ["INBOX"], (err, data) => { for (const thread of data) { global.api.sendMessage(📜 𝗣𝗼𝗲𝘁𝗿𝘆 𝗧𝗶𝗺𝗲:\n\n${random}, thread.threadID); } }); }
+
+function sendQuranAyat() { const ayatData = JSON.parse(fs.readFileSync(path.join(__dirname, "./quranAyat.json"))); const random = ayatData[Math.floor(Math.random() * ayatData.length)]; global.api.getThreadList(10, null, ["INBOX"], (err, data) => { for (const thread of data) { global.api.sendMessage(📖 𝗤𝘂𝗿𝗮𝗻 𝗔𝘆𝗮𝘁:\n\n${random.arabic}\n\n📘 Urdu Translation:\n${random.urdu}, thread.threadID); } }); }
+
+function getRandomPoetry(type = "happy") { const poetryData = JSON.parse(fs.readFileSync(path.join(__dirname, "./poetry.json"))); const list = poetryData[type] || []; return list[Math.floor(Math.random() * list.length)] || "✨"; }
+

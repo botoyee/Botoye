@@ -1,56 +1,41 @@
-const axios = require('axios');
+const axios = require("axios");
 
 module.exports.config = {
-  name: "ddmedia",
+  name: "ddvideo",
   version: "1.0",
   hasPermssion: 0,
   credits: "Technical Solution",
-  description: "Search videos or pictures using Pixabay",
+  description: "Search videos from Pixabay (multiple results)",
   commandCategory: "media",
-  usages: "/ddvideo <keyword>\n/ddpic <keyword>",
-  cooldowns: 5,
+  usages: "/ddvideo <search term>",
+  cooldowns: 5
 };
 
 module.exports.run = async function ({ api, event, args }) {
-  const { threadID, messageID, body } = event;
   const input = args.join(" ");
-  const command = event.body.split(" ")[0].toLowerCase();
+  const threadID = event.threadID;
+  const messageID = event.messageID;
+
+  if (!input) return api.sendMessage("🎬 *Video dhoondhne ke liye kuch likho!*\nMisal: /ddvideo rain", threadID, messageID);
+
   const apiKey = "51609285-e2658ec185028d1e56777bd26";
 
-  if (!input) {
-    return api.sendMessage("⛔ براہ کرم تلاش کرنے کے لیے کوئی لفظ لکھیں۔\nمثال: /ddvideo flowers یا /ddpic cat", threadID, messageID);
-  }
-
   try {
-    if (command === "/ddvideo") {
-      const res = await axios.get(`https://pixabay.com/api/videos/?key=${apiKey}&q=${encodeURIComponent(input)}&per_page=1`);
-      const hits = res.data.hits;
-      if (!hits.length) return api.sendMessage(`❌ کوئی ویڈیو نہیں ملی: "${input}"`, threadID, messageID);
+    const res = await axios.get(`https://pixabay.com/api/videos/?key=${apiKey}&q=${encodeURIComponent(input)}&per_page=3`);
+    const results = res.data.hits;
 
-      const vid = hits[0];
-      const msg = `📽️ *Video Found:*\n\n📌 Tags: ${vid.tags}\n⏱️ Duration: ${vid.duration} sec\n📥 Download: ${vid.videos.medium.url}\n👤 User: ${vid.user}`;
-      return api.sendMessage({
+    if (!results.length) return api.sendMessage("❌ Koi video nahi mili!", threadID, messageID);
+
+    for (const vid of results) {
+      const msg = `📽️ *Video:*\n\n🔍 Tags: ${vid.tags}\n⏱️ Duration: ${vid.duration} sec\n📥 Video: ${vid.videos.medium.url}\n👤 User: ${vid.user}`;
+      await api.sendMessage({
         body: msg,
         attachment: await global.utils.getStreamFromURL(vid.videos.medium.thumbnail)
-      }, threadID, messageID);
+      }, threadID);
     }
 
-    if (command === "/ddpic") {
-      const res = await axios.get(`https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(input)}&per_page=1`);
-      const hits = res.data.hits;
-      if (!hits.length) return api.sendMessage(`❌ کوئی تصویر نہیں ملی: "${input}"`, threadID, messageID);
-
-      const pic = hits[0];
-      const msg = `🖼️ *Picture Found:*\n\n📌 Tags: ${pic.tags}\n👍 Likes: ${pic.likes}\n👤 User: ${pic.user}`;
-      return api.sendMessage({
-        body: msg,
-        attachment: await global.utils.getStreamFromURL(pic.webformatURL)
-      }, threadID, messageID);
-    }
-
-    return api.sendMessage("❗ نامعلوم کمانڈ! صرف /ddvideo یا /ddpic استعمال کریں", threadID, messageID);
-  } catch (err) {
-    console.error(err);
-    return api.sendMessage("⚠️ تلاش کرنے میں مسئلہ ہوا، دوبارہ کوشش کریں!", threadID, messageID);
+  } catch (e) {
+    console.log(e);
+    return api.sendMessage("⚠️ Error: Video hasil karne mein masla hua!", threadID, messageID);
   }
 };

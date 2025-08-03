@@ -1,15 +1,17 @@
 const fs = require("fs");
+const path = require("path");
 
 module.exports.config = {
   name: "membernoti",
   eventType: ["log:subscribe", "log:unsubscribe"],
-  version: "1.0.2",
+  version: "1.0.5",
   credits: "Kashif Raza",
-  description: "Sad/happy poetry with video on member join/leave"
+  description: "Join/Leave shayari with 600KB mp4"
 };
 
 module.exports.run = async function ({ api, event }) {
   const { threadID, logMessageData, eventType } = event;
+  const botID = api.getCurrentUserID();
 
   const sadPoetry = [
     "چپکے چپکے رو لیتے ہیں ہم...\nکہ کوئی دیکھ نہ لے ہماری تنہائیاں 💔",
@@ -23,27 +25,27 @@ module.exports.run = async function ({ api, event }) {
     "نئے چہروں سے نئے خواب جڑتے ہیں، خوش آمدید 🤗"
   ];
 
+  // If someone joins
   if (eventType === "log:subscribe") {
     const joiner = logMessageData.addedParticipants?.[0]?.fullName || "نیا ممبر";
-    const joinPoem = happyPoetry[Math.floor(Math.random() * happyPoetry.length)];
-    const joinVideoPath = __dirname + `/../commands/noprefix/join.mp4`;
+    const poem = happyPoetry[Math.floor(Math.random() * happyPoetry.length)];
+    const videoPath = path.join(__dirname, "..", "commands", "noprefix", "join.mp4");
 
     return api.sendMessage({
-      body: `✨ خوش آمدید ${joiner} ✨\n\n${joinPoem}`,
-      attachment: fs.existsSync(joinVideoPath) ? fs.createReadStream(joinVideoPath) : null
+      body: `✨ خوش آمدید ${joiner} ✨\n\n${poem}`,
+      attachment: fs.createReadStream(videoPath)
     }, threadID);
   }
 
+  // If someone leaves (except bot itself)
   if (eventType === "log:unsubscribe") {
-    const leaver = logMessageData.leftParticipantFbId;
-    if (leaver === api.getCurrentUserID()) return; // Ignore if bot left
-
-    const sadPoem = sadPoetry[Math.floor(Math.random() * sadPoetry.length)];
-    const leftVideoPath = __dirname + `/../commands/noprefix/left.mp4`;
+    if (logMessageData.leftParticipantFbId === botID) return;
+    const poem = sadPoetry[Math.floor(Math.random() * sadPoetry.length)];
+    const videoPath = path.join(__dirname, "..", "commands", "noprefix", "left.mp4");
 
     return api.sendMessage({
-      body: `😢 ایک دوست چلا گیا...\n\n${sadPoem}`,
-      attachment: fs.existsSync(leftVideoPath) ? fs.createReadStream(leftVideoPath) : null
+      body: `💔 ایک دوست چلا گیا...\n\n${poem}`,
+      attachment: fs.createReadStream(videoPath)
     }, threadID);
   }
 };

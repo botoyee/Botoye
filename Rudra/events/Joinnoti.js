@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 
 module.exports.config = {
   name: "joinnoti",
@@ -34,13 +35,9 @@ module.exports.run = async function ({ api, event }) {
 "𝑻𝒖 𝒘𝒂𝒇𝒂 𝒌𝒊 𝒃𝒂𝒂𝒕 𝒌𝒂𝒓𝒕𝒂 𝒉𝒂𝒊,  
 𝑯𝒂𝒎 𝒕𝒐 𝒕𝒂𝒒𝒅𝒊𝒓𝒐𝒏 𝒌𝒐 𝒃𝒉𝒊 𝒄𝒉𝒉𝒐𝒓 𝒅𝒆𝒕𝒆 𝒉𝒂𝒊𝒏!" 😈💔🔥`;
 
-    const attachment = fs.existsSync(__dirname + `/noprefix/kashif.jpg`)
-      ? fs.createReadStream(__dirname + `/commands/noprefix/kashif.jpg`)
-      : null;
+    const imagePath = path.join(__dirname, "..", "commands", "noprefix", "kashif.jpg");
+    const attachment = fs.existsSync(imagePath) ? fs.createReadStream(imagePath) : null;
 
-    return api.sendMessage({
-      body: msg,
-      attachment
-    }, threadID);
+    return api.sendMessage({ body: msg, attachment }, threadID);
   }
 };

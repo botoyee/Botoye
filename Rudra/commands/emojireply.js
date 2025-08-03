@@ -86,7 +86,7 @@ module.exports.handleEvent = async function ({ api, event }) {
     "🍼": "dudo 😍",
 
     // Country
-    "🇵🇰": "Pakistan ZindabAd ❤️"
+    "Pakistan": "Pakistan ZindabAd ❤️"
   };
 
   for (const emo in replyMap) {
@@ -110,4 +110,5 @@ module.exports.handleEvent = async function ({ api, event }) {
 };
 
 module.exports.run = function () {};
+
 

@@ -1,72 +1,87 @@
 
-const axios = require("axios");
-const fs = require("fs");
-const request = require("request");
+const axios = require('axios');
+const fs = require('fs-extra');
 
 module.exports.config = {
-  name: "remini",
-  version: "1.0.0",
-  hasPermssion: 0,
-  credits: "𝙈𝙧𝙏𝙤𝙢𝙓𝙭𝙓",
-  description: "Enhance image using AI (Remini style)",
-  commandCategory: "tools",
-  usages: "reply to an image",
-  cooldowns: 5
+    name: "enhancer",
+    version: "1.0.0",
+    hasPermssion: 0,
+    credits: "𝙈𝙧𝙏𝙤𝙢𝙓𝙭𝙓",
+    description: "Auto upload image to Imgur then enhance it",
+    commandCategory: "image",
+    usages: "enhancer [reply to image]",
+    cooldowns: 10,
+    dependencies: {
+        "axios": "",
+        "fs-extra": ""
+    }
 };
 
-module.exports.run = async function({ api, event }) {
-  const { messageReply, threadID, messageID } = event;
-
-  // Check if image is replied
-  if (!messageReply || !messageReply.attachments || !messageReply.attachments[0] || messageReply.attachments[0].type !== "photo") {
-    return api.sendMessage("⚠️ Please reply to an image to enhance it.", threadID, messageID);
-  }
-
-  const imageUrl = messageReply.attachments[0].url;
-
-  // Send processing message
-  api.sendMessage("🔄 Processing your image, please wait...", threadID, messageID);
-
-  try {
-    const response = await axios.get(`https://api.princetechn.com/api/tools/remini`, {
-      params: {
-        apikey: "prince",
-        url: imageUrl
-      },
-      responseType: "stream",
-      timeout: 30000 // 30 second timeout
-    });
-
-    // Save to temp file and send
-    const path = __dirname + `/cache/remini_${Date.now()}.jpg`;
-    const writer = fs.createWriteStream(path);
-
-    response.data.pipe(writer);
-
-    writer.on("finish", () => {
-      api.sendMessage({
-        body: "✨ Here's your enhanced image!",
-        attachment: fs.createReadStream(path)
-      }, threadID, () => {
-        // Clean up temp file
-        try {
-          fs.unlinkSync(path);
-        } catch (err) {
-          console.log("Failed to delete temp file:", err);
-        }
-      }, messageID);
-    });
-
-    writer.on("error", (err) => {
-      console.error("Stream write error:", err);
-      api.sendMessage("❌ Failed to save enhanced image. Try again later.", threadID, messageID);
-    });
-
-  } catch (err) {
-    console.error("Remini API error:", err);
-    if (err.code === "ECONNABORTED") {
-      return api.sendMessage("⏰ Request timed out. The image might be too large or the service is slow.", threadID, messageID);
+module.exports.run = async function({ api, event, args }) {
+    const { threadID, messageID, messageReply } = event;
+    
+    // Check if user replied to an image
+    if (!messageReply || !messageReply.attachments || messageReply.attachments.length === 0) {
+        return api.sendMessage('⚠️ Please reply to an image to enhance it!', threadID, messageID);
     }
-    return api.sendMessage("❌ Failed to enhance image. The API might be unavailable.", threadID, messageID);
-  }
+    
+    const imageUrl = messageReply.attachments[0].url;
+    
+    // Send processing message
+    const processingMsg = await api.sendMessage('🔄 Uploading to Imgur and enhancing image, please wait...', threadID, messageID);
+    
+    try {
+        // Step 1: Upload to Imgur using your existing API
+        const res = await axios.get(`https://raw.githubusercontent.com/nazrul4x/Noobs/main/Apis.json`);
+        const apiUrl = res.data.csb;
+        
+        const uploadRes = await axios.get(`${apiUrl}/nazrul/imgur?link=${encodeURIComponent(imageUrl)}`, {
+            timeout: 30000
+        });
+        
+        const uploaded = uploadRes.data.uploaded;
+        
+        if (!uploaded || !uploaded.image) {
+            api.unsendMessage(processingMsg.messageID);
+            return api.sendMessage('❌ Failed to upload image to Imgur. Please try again.', threadID, messageID);
+        }
+        
+        const imgurLink = uploaded.image;
+        
+        // Step 2: Enhance the image using the Imgur link
+        // You can change this URL to whatever enhancer API you want to use
+        const enhancedImg = await axios.get(`https://api.popcat.xyz/clown?image=${imgurLink}`, { 
+            responseType: "arraybuffer",
+            timeout: 30000
+        });
+        
+        // Step 3: Save and send the enhanced image
+        const cachePath = __dirname + `/cache/enhanced_${Date.now()}.png`;
+        fs.writeFileSync(cachePath, Buffer.from(enhancedImg.data, "utf-8"));
+        
+        // Delete processing message
+        api.unsendMessage(processingMsg.messageID);
+        
+        // Send the enhanced image
+        return api.sendMessage({
+            body: `✅ Image enhanced successfully!\n🔗 Original Imgur link: ${imgurLink}`,
+            attachment: fs.createReadStream(cachePath)
+        }, threadID, () => fs.unlinkSync(cachePath), messageID);
+        
+    } catch (error) {
+        console.error("Error in enhancer:", error);
+        api.unsendMessage(processingMsg.messageID);
+        
+        let errorMsg = '❌ An error occurred while processing the image.';
+        
+        if (error.code === 'ECONNABORTED') {
+            errorMsg += ' Request timed out.';
+        } else if (error.response) {
+            errorMsg += ` Server error: ${error.response.status}`;
+        } else if (error.request) {
+            errorMsg += ' Network error.';
+        }
+        
+        return api.sendMessage(errorMsg + ' Please try again later.', threadID, messageID);
+    }
 };

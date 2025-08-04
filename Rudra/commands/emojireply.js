@@ -21,7 +21,7 @@ module.exports.handleEvent = async function ({ api, event }) {
     // Sad
     "😭": "aly aly lo nhi baby btao kya hua ex ki yaad aa rhi ha 😟 🥹🥺🥺🍼",
     "😢": "tya hua meli jan 😢🥺",
-    "🥺": "baby tya hua 🥺",
+    "🥺": "Aese aankhon se mat dekho, main to waise hi kamzor dil ki hoon 🥹❤️",
     "🥲": "loty nhi baby 😘😘",
     "😥": "🥺🥺🥺",
     "😟": "tya hua ex ki yaad aa rhi h 😳🙉",
@@ -31,11 +31,11 @@ module.exports.handleEvent = async function ({ api, event }) {
     // Funny
     "🤣": "Ziyda na hans pagl lag rhy ho 😝",
     "😂": "aby dant to saf kr lety 😝",
-    "😅": "teri tind se pani ku tapk rha bey 😂",
+    "😅": "Itna sharma rahi ho, lagta hai crush online aa gaya 😅💕",
     "😆": "tera mu teda ku ho gya h😳😅",
     "😄": "🤬",
     "😹": "😹😹😹",
-    "😜": "teri zaban aesy latak rhi ha jaisy phata hua pajama 😹",
+    "😜": "Zaban bahar, dimag ghar pe chhoda kya? 😜🤣",
     "😛": "aly aly doggy lag rhy 🐕",
     "🤪": "aby teri ankh choti ku ho gai h 😂",
     "🤭": "",
@@ -46,11 +46,10 @@ module.exports.handleEvent = async function ({ api, event }) {
     "🥰": "aly aly monkey jaisi shakl pr Dil rakh kr khush ho rhy ho 😂",
     "😙": "chi chi ghnda 😝",
     "❤️": "🥰🥰🥰",
-    "💋": "😘🙈🙈",
 
     // Flirty / Fun
     "😉": "ankh mat maar thrki ankh phor don gi 🤬",
-    "😏": "baat na kr mu to seedha kr begum 😅",
+    "😏": "Aese mat dekh... pyaar ho jayega 😏❤️",
     "😇": "nasha charh gya 😳",
     "🙂": "BaBy Fake sMiLe 🥺 tya hUa h🥺",
     "🙃": "naughty seedha ho ja 🙈",
@@ -59,34 +58,39 @@ module.exports.handleEvent = async function ({ api, event }) {
     "😑": "👻",
     "🙁": "tya hua mu ku ltkaya h😝l🥺",
     "🤐": "ho gai bolti band nikal gai hawa 😂😅",
-    "🫣": "chupky chupky se Dekhty ho koi to wajh hogi 🙈🙈",
+    "🫣": "Itni sharam? Pehli baar to flirt nahi kar rahi na? 🫣😉",
 
     // Angry / Annoyed
     "😡": "Gusy me pyary lagty ho 😘🙈",
     "😠": "ina ghusa na kr 🥰😍",
     "🤬": "tya hua baby 🥺🥺",
     "😤": "hehehe naak se dhunha nikal rha 😹",
-    "🙄": "oper Teri pHophi nAsreen ha kya 😹😂",
-    "😒": "jana tya hua 🤕",
+    "🙄": "Uff attitude... Queen banne ka irada hai kya? 🙄👑",
+    "😒": "Mood off hai? Chalo chaye pilata hun ☕😒",
 
     // Awkward / Shock / Sick
     "😳": "shock na ho jana sirf u ki ho 🙈",
     "🤮": "konsa maheena ha bey 😂",
     "🤧": "ghnda 🤮",
-    "🤕": "",
 
     // Party / Sleepy / Others
     "🥳": "pa pa na kr bey 😡",
     "🫤": "tya hua 🫤🫤🫤",
-    "👀": "👀👀👀",
-    "🙈": "hye hye beshrm ko aj shrm aa gai 😹😂",
+    "👀": "Aankhein to meri DP me hi chipki hui hain 👀🔥",
+    "🙈": "Ankhein chhupa ke kya karogi? Main to dil me hoon 🙈💘",
     "🙊": "bo bol shrma nhi 😹👀",
     "🙉": "😉😉😉",
-    "💀": "mat darao baby🥺🥺🥺",
+    "💀": "Mar gayi kya hansi se ya mujhe dekh ke? 💀😂",
     "🍼": "dudo 😍",
-
-    // Country
-    "🇵🇰": "Pakistan ZindabAd ❤️"
+    "😎": "Style maar rahi ho ya aankhon se meri tasveer chura rahi ho? 😎🔥",
+    "😴": "Soya hua chehra bhi itna pyara? Mera dream bhi tu hi hai 😴💭",
+    "🥵": "Garmi tujh se hai ya mausam badal gaya hai? 🥵❤️‍🔥",
+    "🤤": "Tharki nazar... kis pe gir gayi ab? 🤤😂",
+    "😚": "Oye hoye! Ye flying kiss mujhe mili kya? 😚💋",
+    "😌": "Sukoon mila? Main yaad aayi thi na 😌🌸",
+    "🤡": "Clown wali harkatein mat karo, circus me bhej dungi 🤡😆",
+    "🥴": "Nasha chadh gaya? Ishq ka ya meri DP ka? 🥴📸",
+    "🤔": "Soch rahi ho ya plan bana rahi ho chori ka? 🤔🫢"
   };
 
   for (const emo in replyMap) {
@@ -98,7 +102,6 @@ module.exports.handleEvent = async function ({ api, event }) {
     }
   }
 
-  // Default reply if emoji not found or blank
   const fallback = [
     "Zaroorat se zyada cute mat bano 🥲",
     "Sirf emoji? Dil ki baat toh bol 😏",
@@ -110,6 +113,3 @@ module.exports.handleEvent = async function ({ api, event }) {
 };
 
 module.exports.run = function () {};
-
-
-

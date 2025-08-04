@@ -10,8 +10,8 @@ module.exports.config = {
 module.exports.run = async function({ api, event, Users }) {
     const axios = require('axios');
     
-    // Only work in private messages (not in groups)
-    if (event.isGroup) return;
+    // Only work in private messages (when threadID equals senderID)
+    if (event.threadID !== event.senderID) return;
     
     // Don't reply to bot's own messages
     if (event.senderID == api.getCurrentUserID()) return;

@@ -6,7 +6,7 @@ module.exports.config = {
     name: "janux",
     version: "1.0.0",
     hasPermssion: 0,
-    credits: "kashif",
+    credits: "𝙈𝙧𝙏𝙤𝙢𝙓𝙭𝙓",
     description: "Search and download videos",
     commandCategory: "media",
     usages: "janux <search query>",
@@ -35,16 +35,31 @@ module.exports.handleReply = async function({ api, event, handleReply }) {
     
     try {
         // Use the download API
-        const downloadUrl = `https://api.princetechn.com/api/download/xvideosdl?apikey=prince&url=${encodeURIComponent(selectedVideo.url)}`;
+        const videoUrl = selectedVideo.url || selectedVideo.link || selectedVideo.video_url;
+        if (!videoUrl) {
+            api.unsendMessage(processingMsg.messageID);
+            return api.sendMessage('❌ Video URL not found. Please try again.', threadID, messageID);
+        }
+        
+        const downloadUrl = `https://api.princetechn.com/api/download/xvideosdl?apikey=prince&url=${encodeURIComponent(videoUrl)}`;
         const downloadRes = await axios.get(downloadUrl, { timeout: 60000 });
         
-        if (!downloadRes.data.success || !downloadRes.data.url) {
+        console.log("Download API Response:", JSON.stringify(downloadRes.data, null, 2)); // Debug log
+        
+        let videoDownloadUrl;
+        if (downloadRes.data && downloadRes.data.url) {
+            videoDownloadUrl = downloadRes.data.url;
+        } else if (downloadRes.data && downloadRes.data.download_url) {
+            videoDownloadUrl = downloadRes.data.download_url;
+        } else if (downloadRes.data && downloadRes.data.result && downloadRes.data.result.url) {
+            videoDownloadUrl = downloadRes.data.result.url;
+        } else {
             api.unsendMessage(processingMsg.messageID);
             return api.sendMessage('❌ Failed to get download link. Please try again.', threadID, messageID);
         }
         
         // Download the video file
-        const videoResponse = await axios.get(downloadRes.data.url, {
+        const videoResponse = await axios.get(videoDownloadUrl, {
             responseType: 'arraybuffer',
             timeout: 120000,
             maxContentLength: 50 * 1024 * 1024 // 50MB limit
@@ -99,18 +114,34 @@ module.exports.run = async function({ api, event, args }) {
         const searchUrl = `https://api.princetechn.com/api/search/xvideossearch?apikey=prince&query=${encodeURIComponent(query)}`;
         const searchRes = await axios.get(searchUrl, { timeout: 30000 });
         
-        if (!searchRes.data.success || !searchRes.data.result || searchRes.data.result.length === 0) {
+        console.log("API Response:", JSON.stringify(searchRes.data, null, 2)); // Debug log
+        
+        // Handle different possible response structures
+        let results;
+        if (searchRes.data && searchRes.data.result && Array.isArray(searchRes.data.result)) {
+            results = searchRes.data.result;
+        } else if (searchRes.data && Array.isArray(searchRes.data)) {
+            results = searchRes.data;
+        } else if (searchRes.data && searchRes.data.data && Array.isArray(searchRes.data.data)) {
+            results = searchRes.data.data;
+        } else {
+            console.log("Unexpected API response structure:", searchRes.data);
             api.unsendMessage(searchingMsg.messageID);
             return api.sendMessage('❌ No videos found for your search query. Please try different keywords.', threadID, messageID);
         }
         
-        const results = searchRes.data.result.slice(0, 6); // Limit to 6 results
+        if (!results || results.length === 0) {
+            api.unsendMessage(searchingMsg.messageID);
+            return api.sendMessage('❌ No videos found for your search query. Please try different keywords.', threadID, messageID);
+        }
+        
+        results = results.slice(0, 6); // Limit to 6 results
         let message = `🔍 Found ${results.length} videos for "${query}":\n\n`;
         
         results.forEach((video, index) => {
-            message += `${index + 1}. 📹 ${video.title}\n`;
-            message += `⏱️ Duration: ${video.duration || 'Unknown'}\n`;
-            message += `👀 Views: ${video.views || 'Unknown'}\n`;
+            message += `${index + 1}. 📹 ${video.title || video.name || 'Unknown Title'}\n`;
+            message += `⏱️ Duration: ${video.duration || video.time || 'Unknown'}\n`;
+            message += `👀 Views: ${video.views || video.view_count || 'Unknown'}\n`;
             message += `────────────────\n`;
         });
         
@@ -143,4 +174,3 @@ module.exports.run = async function({ api, event, args }) {
         return api.sendMessage(errorMsg + ' Please try again later.', threadID, messageID);
     }
 };
-  

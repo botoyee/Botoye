@@ -1,92 +1,88 @@
 const axios = require("axios");
 
 module.exports.config = {
-  name: "masti",
+  name: "tokr",
   version: "1.0.0",
   hasPermssion: 0,
   credits: "Ayan Ali",
   description: "Search TikTok videos and download by number",
   commandCategory: "media",
-  usages: "[search term] or [number after search]",
-  cooldowns: 2,
+  usages: "masti <search query>",
+  cooldowns: 5,
   listenEvents: true
 };
 
-let tiktokSearchCache = {};
-
-module.exports.handleEvent = async function ({ event, api }) {
-  const { body, senderID, threadID, messageID } = event;
-  if (!body || !tiktokSearchCache[senderID]) return;
-
-  const index = parseInt(body.trim());
-  if (isNaN(index)) return;
-
-  const results = tiktokSearchCache[senderID];
-  const selected = results[index - 1];
-  if (!selected) {
-    return api.sendMessage("❌ Invalid number selected. Please try again.", threadID, messageID);
-  }
-
-  try {
-    const res = await axios.get(`https://api.princetechn.com/api/download/tiktok`, {
-      params: {
-        apikey: "prince",
-        url: selected.url
-      }
-    });
-
-    const { video, title } = res.data.result;
-
-    const fileRes = await axios.get(video, { responseType: 'arraybuffer' });
-
-    api.sendMessage({
-      body: `📥 Downloaded: ${title || "TikTok Video"}`,
-      attachment: Buffer.from(fileRes.data, "utf-8")
-    }, threadID, () => {
-      delete tiktokSearchCache[senderID]; // Clear cache after download
-    });
-
-  } catch (err) {
-    console.error(err);
-    api.sendMessage("⚠️ Failed to download video. Try again later.", threadID, messageID);
-  }
-};
+const cache = {};
 
 module.exports.run = async function ({ api, event, args }) {
+  const query = args.join(" ").trim();
   const { threadID, messageID, senderID } = event;
 
-  if (!args[0]) {
-    return api.sendMessage("🔍 Please enter a search query.\nExample: masti princetechnexus", threadID, messageID);
+  if (!query) {
+    return api.sendMessage("❌ Please provide a search term.\nExample: masti princetechnexus", threadID, messageID);
   }
 
-  const query = encodeURIComponent(args.join(" "));
-
   try {
-    const res = await axios.get(`https://api.princetechn.com/api/search/tiktoksearch`, {
+    const res = await axios.get("https://api.princetechn.com/api/search/tiktoksearch", {
       params: {
         apikey: "prince",
         query
       }
     });
 
-    const results = res.data.result.slice(0, 10); // Limit to 10 results
-    if (results.length === 0) {
-      return api.sendMessage("❌ No results found.", threadID, messageID);
+    const results = res.data.result.slice(0, 6); // Limit results to 6
+    if (!results.length) {
+      return api.sendMessage("😕 No TikTok videos found for that query.", threadID, messageID);
     }
 
-    let msg = "🎬 TikTok Search Results:\n";
-    results.forEach((item, i) => {
-      msg += `${i + 1}. ${item.title?.slice(0, 50) || "Untitled"}\n`;
+    let msg = `🔍 Results for: "${query}"\n\n`;
+    results.forEach((video, i) => {
+      msg += `${i + 1}. ${video.title || "Untitled Video"}\n`;
     });
-    msg += "\n🔢 Reply with the number to download.";
+    msg += `\n🔢 Reply with a number (1-${results.length}) to download the video.`;
 
-    // Cache results per user
-    tiktokSearchCache[senderID] = results;
+    // Save to cache
+    cache[senderID] = results;
 
     return api.sendMessage(msg, threadID, messageID);
+  } catch (err) {
+    console.error("❌ Search Error:", err.message);
+    return api.sendMessage("⚠️ Failed to search videos. Try again later.", threadID, messageID);
+  }
+};
+
+module.exports.handleEvent = async function ({ api, event }) {
+  const { body, threadID, messageID, senderID } = event;
+  if (!body || !cache[senderID]) return;
+
+  const index = parseInt(body.trim());
+  if (isNaN(index) || index < 1 || index > cache[senderID].length) return;
+
+  const videoData = cache[senderID][index - 1];
+  const videoUrl = videoData.url;
+
+  try {
+    const res = await axios.get("https://api.princetechn.com/api/download/tiktok", {
+      params: {
+        apikey: "prince",
+        url: videoUrl
+      }
+    });
+
+    const { video, title } = res.data.result;
+
+    const videoStream = await axios.get(video, { responseType: "arraybuffer" });
+    const buffer = Buffer.from(videoStream.data, "utf-8");
+
+    api.sendMessage({
+      body: `🎬 ${title || "TikTok Video"}`,
+      attachment: buffer
+    }, threadID, messageID);
+
+    delete cache[senderID]; // clear cache after successful send
 
   } catch (err) {
-    console.error(err);
-    return api.sendMessage("⚠️ Failed to fetch search results.", threadID, messageID);
+    console.error("❌ Download Error:", err.message);
+    return api.sendMessage("⚠️ Failed to download video.", threadID, messageID);
   }
 };

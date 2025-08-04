@@ -1,57 +1,36 @@
-module.exports = function ({ api, models, Users, Threads, Currencies }) {
-  const fs = require("fs-extra");
+module.exports = function ({api ,models, Users, Threads, Currencies }) {
+    const logger = require("../../utils/log.js");
+   	const moment = require("moment");
 
-  return async function ({ event }) {
-    const { threadID, messageID } = event;
-    const client = global.client;
-    const _module = global._module;
-    const { handleEvent } = client;
-
-    if (handleEvent.length !== 0) {
-      for (const value of handleEvent) {
-        try {
-          // ✅ FIX: Run even if eventType is undefined (normal messages)
-          if (!value.config.eventType || value.config.eventType.includes(event.logMessageType)) {
-            const data = {};
-            const threadData = client.threadData.get(threadID) || {};
-            if (typeof threadData.data === "object") data.thread = threadData.data;
-            if (typeof threadData.settings === "object") data.threadSettings = threadData.settings;
-            if (typeof client.userData.get(event.senderID) === "object")
-              data.user = client.userData.get(event.senderID).data || {};
-
-            value.handleEvent({ event, api, models, Users, Threads, Currencies, data });
-          }
-        } catch (err) {
-          console.error(`❌ Failed to execute handleEvent for module: ${value.config.name}\n`, err);
+    return function ({ event }) {
+        const timeStart = Date.now()
+        const time = moment.tz("Asia/Kolkata").format("HH:MM:ss L");
+        const { userBanned, threadBanned } = global.data;
+        const { events } = global.client;
+        const { allowInbox, DeveloperMode } = global.config;
+        var { senderID, threadID } = event;
+        senderID = String(senderID);
+        threadID = String(threadID);
+        if (userBanned.has(senderID)|| threadBanned.has(threadID) || allowInbox == ![] && senderID == threadID) return;
+        for (const [key, value] of events.entries()) {
+            if (value.config.eventType.indexOf(event.logMessageType) !== -1) {
+                const eventRun = events.get(key);
+                try {
+                    const Obj = {};
+                    Obj.api = api
+                    Obj.event = event
+                    Obj.models= models 
+                    Obj.Users= Users 
+                    Obj.Threads = Threads
+                    Obj.Currencies = Currencies 
+                    eventRun.run(Obj);
+                    if (DeveloperMode == !![]) 
+                    	logger(global.getText('handleEvent', 'executeEvent', time, eventRun.config.name, threadID, Date.now() - timeStart), '[ Event ]');
+                } catch (error) {
+                    logger(global.getText('handleEvent', 'eventError', eventRun.config.name, JSON.stringify(error)), "error");
+                }
+            }
         }
-      }
-    }
-
-    if (global.client.handleReply.length !== 0) {
-      const handleReplyData = global.client.handleReply;
-      const indexOfHandle = handleReplyData.findIndex(
-        item => item.messageID === messageID && item.threadID === threadID
-      );
-
-      if (indexOfHandle < 0) return;
-      const data = handleReplyData[indexOfHandle];
-
-      const module = _module.get(data.name);
-
-      if (!module) return;
-
-      try {
-        const threadData = client.threadData.get(threadID) || {};
-        const dataObj = {};
-        if (typeof threadData.data === "object") dataObj.thread = threadData.data;
-        if (typeof threadData.settings === "object") dataObj.threadSettings = threadData.settings;
-        if (typeof client.userData.get(event.senderID) === "object")
-          dataObj.user = client.userData.get(event.senderID).data || {};
-
-        module.handleReply({ api, event, models, Users, Threads, Currencies, handleReply: data, data: dataObj });
-      } catch (err) {
-        console.error(`❌ Failed to execute handleReply for module: ${data.name}\n`, err);
-      }
-    }
-  };
-};
+        return;
+    };
+}

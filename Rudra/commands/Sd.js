@@ -1,10 +1,10 @@
 const axios = require("axios");
 
 module.exports.config = {
-  name: "kr",
+  name: "sd",
   version: "1.0.1",
   hasPermission: 0,
-  credits: "Kashif",
+  credits: "raj",
   description: "Generate AI image using Stable Diffusion",
   commandCategory: "AI",
   usages: "[prompt]",

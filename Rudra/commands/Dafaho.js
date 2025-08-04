@@ -42,16 +42,7 @@ module.exports.run = async ({ api, event, args }) => {
       });
       
       fs.writeFileSync(path, Buffer.from(response.data));
-      msgData.attachment = fs.createReadStream(path);
-      
-      // Clean up temp file after sending
-      setTimeout(() => {
-        try {
-          fs.unlinkSync(path);
-        } catch (err) {
-          console.log("Failed to delete temp file:", err);
-        }
-      }, 60000); // Delete after 1 minute
+      msgData.attachment = path; // Store path instead of stream
       
     } catch (error) {
       console.error("Error downloading media:", error);
@@ -68,10 +59,38 @@ module.exports.run = async ({ api, event, args }) => {
   for (const id of allThread) {
     if (id != threadID && !isNaN(parseInt(id))) {
       try {
-        await api.sendMessage(msgData, id);
+        // Create fresh attachment stream for each send if media
+        let sendData = {};
+        if (isMedia && msgData.attachment) {
+          const url = messageReply.attachments[0].url;
+          const ext = url.substring(url.lastIndexOf(".") + 1);
+          const tempPath = __dirname + `/cache/temp_${Date.now()}_${id}.${ext}`;
+          
+          const response = await axios.get(url, { 
+            responseType: "arraybuffer",
+            timeout: 30000 
+          });
+          
+          fs.writeFileSync(tempPath, Buffer.from(response.data));
+          sendData.attachment = fs.createReadStream(tempPath);
+          
+          // Send and cleanup immediately
+          await api.sendMessage(sendData, id);
+          
+          // Delete temp file
+          setTimeout(() => {
+            try {
+              fs.unlinkSync(tempPath);
+            } catch (err) {}
+          }, 5000);
+        } else {
+          sendData.body = msgData.body;
+          await api.sendMessage(sendData, id);
+        }
+        
         sent++;
-        // Add delay to prevent rate limiting
-        await new Promise(r => setTimeout(r, 800));
+        // Increased delay to prevent rate limiting
+        await new Promise(r => setTimeout(r, 1500));
       } catch (error) {
         failed++;
         console.log(`Failed to send to thread ${id}:`, error.message);

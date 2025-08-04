@@ -1,40 +1,42 @@
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
+const axios = require("axios");
+const fs = require("fs-extra");
 
 module.exports = {
-  config: {
-    name: "kashif",
-    version: "1.0",
-    author: "Kashif x Ayan",
-    description: "Generate AI image using prompt",
-    usage: "/kashif <prompt>",
-    commandCategory: "ai",
-    cooldowns: 3,
-    hasPrefix: true,
-  },
-
-  onStart: async function ({ api, event, args }) {
-    if (!args[0]) {
-      return api.sendMessage("👋 Prompt likho jaise:\n/kashif a beautiful girl", event.threadID, event.messageID);
-    }
-
-    const prompt = args.join(" ");
-    const url = `https://api.princetechn.com/api/ai/sd?apikey=prince&prompt=${encodeURIComponent(prompt)}`;
-
-    try {
-      const response = await axios.get(url, { responseType: 'arraybuffer' });
-      const imagePath = path.join(__dirname, 'cache', `gen_${event.senderID}.jpg`);
-      fs.writeFileSync(imagePath, Buffer.from(response.data, 'binary'));
-
-      api.sendMessage({
-        body: `🧠 Prompt: ${prompt}\n📷 Here's your generated image`,
-        attachment: fs.createReadStream(imagePath)
-      }, event.threadID, () => fs.unlinkSync(imagePath), event.messageID);
-
-    } catch (err) {
-      console.error(err);
-      return api.sendMessage("⚠️ Image generate nahi hui. Thora baad try karo.", event.threadID, event.messageID);
-    }
+ config: {
+  name: "kashif",
+  aliases: [],
+  version: "1.0",
+  author: "Kashif Raza",
+  countDown: 5,
+  role: 0,
+  shortDescription: "Generate AI photo",
+  longDescription: "AI photo generator using prompt",
+  category: "image",
+  guide: {
+   en: "{pn} [prompt]\nExample: {pn} a beautiful pakistani girl"
   }
+ },
+
+ onStart: async function ({ message, args, api, event }) {
+  const prompt = args.join(" ");
+  if (!prompt)
+   return message.reply("📸 *Kya banana hai?*\nExample: /kashif a beautiful girl");
+
+  const apiKey = "prince";
+  const url = `https://api.princetechn.com/api/ai/sd?apikey=${apiKey}&prompt=${encodeURIComponent(prompt)}`;
+
+  try {
+   const res = await axios.get(url, { responseType: "arraybuffer" });
+   const path = __dirname + `/cache/kashif_${event.senderID}.jpg`;
+   fs.writeFileSync(path, res.data);
+
+   message.reply({
+    body: `🧠 *AI ne banaya:*\n"${prompt}"`,
+    attachment: fs.createReadStream(path)
+   }, () => fs.unlinkSync(path));
+  } catch (e) {
+   console.error(e);
+   message.reply("😓 *Image generate nahi ho saki. Thori dair baad try karo.*");
+  }
+ }
 };

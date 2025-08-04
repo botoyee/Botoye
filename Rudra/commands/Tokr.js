@@ -2,12 +2,12 @@ const axios = require("axios");
 
 module.exports.config = {
   name: "tokr",
-  version: "1.0.0",
+  version: "1.0.1",
   hasPermssion: 0,
   credits: "Ayan Ali",
-  description: "Download TikTok video by search",
+  description: "Search and download random TikTok video",
   commandCategory: "media",
-  usages: "masti <search query>",
+  usages: "masti <query>",
   cooldowns: 5
 };
 
@@ -16,33 +16,40 @@ module.exports.run = async function ({ api, event, args }) {
   const { threadID, messageID } = event;
 
   if (!query) {
-    return api.sendMessage("❌ Please provide a search term.\nExample: poetry or sad status", threadID, messageID);
+    return api.sendMessage("❌ Please provide a search term.\nExample: masti cat dance", threadID, messageID);
   }
 
   try {
+    // Randomizer to fetch different results each time
+    const random = Math.random().toString(36).substring(7);
+    const finalQuery = `${query} ${random}`;
+
     const res = await axios.get("https://api.princetechn.com/api/search/tiktoksearch", {
       params: {
         apikey: "prince",
-        query
+        query: finalQuery
       }
     });
 
     const result = res.data.results;
+
     if (!result || !result.no_watermark) {
-      return api.sendMessage("😕 Couldn't find a valid video.", threadID, messageID);
+      console.log("❌ API returned no valid video:", res.data);
+      return api.sendMessage("😕 No video found. Try a different keyword.", threadID, messageID);
     }
 
-    const videoBuffer = await axios.get(result.no_watermark, {
+    // Download video file (no watermark)
+    const video = await axios.get(result.no_watermark, {
       responseType: "arraybuffer"
     });
 
     return api.sendMessage({
-      body: `🎬 TikTok Video: ${result.title || "Untitled"}`,
-      attachment: Buffer.from(videoBuffer.data, "utf-8")
+      body: `🎥 TikTok: ${result.title || "Untitled Video"}`,
+      attachment: Buffer.from(video.data, "utf-8")
     }, threadID, messageID);
 
   } catch (err) {
-    console.error("❌ Error:", err.message);
-    return api.sendMessage("⚠️ Failed to fetch TikTok video.", threadID, messageID);
+    console.error("❌ Error fetching TikTok video:", err.message);
+    return api.sendMessage("⚠️ Failed to search videos. Try again later.", threadID, messageID);
   }
 };

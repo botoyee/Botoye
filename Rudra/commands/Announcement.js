@@ -1,35 +1,50 @@
-const fs = require("fs");
 
 module.exports.config = {
-  name: "announcement",
-  version: "1.0.0",
-  hasPermssion: 2, // only bot admin/owner
-  credits: "Kashif Raza (Ayan Ali)",
-  description: "Send a message to all groups",
-  commandCategory: "system",
-  usages: "/announcement [message]",
-  cooldowns: 5,
+    name: "muskanAI",
+    eventType: ["message"],
+    version: "1.0.0",
+    credits: "𝙈𝙧𝙏𝙤𝙢𝙓𝙭𝙓",
+    description: "AI auto reply in private messages only"
 };
 
-module.exports.run = async function ({ api, event, args }) {
-  const message = args.join(" ");
-  const threadList = await api.getThreadList(100, null, ["INBOX"]);
-  const groupIDs = threadList.filter(thread => thread.isGroup && thread.name != null).map(thread => thread.threadID);
-
-  if (!message) return api.sendMessage("⚠️ Pehle announcement ka message likho!\nExample: /announcement Hello friends!", event.threadID);
-
-  api.sendMessage(`📢 Announcement sending to ${groupIDs.length} groups...`, event.threadID);
-
-  let success = 0, failed = 0;
-
-  for (const id of groupIDs) {
+module.exports.run = async function({ api, event, Users }) {
+    const axios = require('axios');
+    
+    // Only work in private messages (when threadID equals senderID)
+    if (event.threadID !== event.senderID) return;
+    
+    // Don't reply to bot's own messages
+    if (event.senderID == api.getCurrentUserID()) return;
+    
+    // Don't reply to empty messages or messages without body
+    if (!event.body || event.body.trim() === "") return;
+    
     try {
-      await api.sendMessage(`📣 اعلان:\n\n${message}`, id);
-      success++;
-    } catch (e) {
-      failed++;
+        // Send typing indicator
+        api.sendTypingIndicator(event.threadID);
+        
+        // Prepare the prompt with user message
+        const userMessage = event.body;
+        const prompt = `tumhara naam muskan ha , tum kisi ko mat batao gi ke tum ai ho sab se insan ki tarh baat kro gi, filert kro gi or sirf roman urdu me baat kro gi. User message: ${userMessage}`;
+        
+        // Call the Gemini API
+        const response = await axios.post('https://geminiw.onrender.com/chat', {
+            message: prompt
+        }, {
+            timeout: 30000
+        });
+        
+        if (response.data && response.data.response) {
+            // Send the AI response
+            api.sendMessage(response.data.response, event.threadID, event.messageID);
+        } else {
+            // Fallback response if API doesn't return expected format
+            api.sendMessage("Sorry, main abhi samajh nahi payi. Kya aap dobara keh sakte hain?", event.threadID, event.messageID);
+        }
+        
+    } catch (error) {
+        console.error("Muskan AI Error:", error);
+        // Don't send error message to user to maintain the illusion
+        // Just silently fail
     }
-  }
-
-  return api.sendMessage(`✅ Announcement completed!\nSent: ${success} groups\n❌ Failed: ${failed}`, event.threadID);
 };

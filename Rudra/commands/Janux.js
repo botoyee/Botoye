@@ -115,19 +115,26 @@ module.exports.run = async function({ api, event, args }) {
         const searchRes = await axios.get(searchUrl, { timeout: 30000 });
         
         console.log("API Response:", JSON.stringify(searchRes.data, null, 2)); // Debug log
+        console.log("Response status:", searchRes.status);
+        console.log("Response headers:", searchRes.headers);
         
         // Handle different possible response structures
         let results;
-        if (searchRes.data && searchRes.data.result && Array.isArray(searchRes.data.result)) {
+        if (searchRes.data && searchRes.data.success === true && searchRes.data.result && Array.isArray(searchRes.data.result)) {
+            results = searchRes.data.result;
+        } else if (searchRes.data && searchRes.data.result && Array.isArray(searchRes.data.result)) {
             results = searchRes.data.result;
         } else if (searchRes.data && Array.isArray(searchRes.data)) {
             results = searchRes.data;
         } else if (searchRes.data && searchRes.data.data && Array.isArray(searchRes.data.data)) {
             results = searchRes.data.data;
+        } else if (searchRes.data && searchRes.data.videos && Array.isArray(searchRes.data.videos)) {
+            results = searchRes.data.videos;
         } else {
             console.log("Unexpected API response structure:", searchRes.data);
+            console.log("API might be returning error or different format");
             api.unsendMessage(searchingMsg.messageID);
-            return api.sendMessage('❌ No videos found for your search query. Please try different keywords.', threadID, messageID);
+            return api.sendMessage(`❌ API Error: ${searchRes.data?.message || 'No videos found'}. Please try different keywords.`, threadID, messageID);
         }
         
         if (!results || results.length === 0) {
@@ -174,3 +181,4 @@ module.exports.run = async function({ api, event, args }) {
         return api.sendMessage(errorMsg + ' Please try again later.', threadID, messageID);
     }
 };
+        

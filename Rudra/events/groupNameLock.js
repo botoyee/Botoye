@@ -1,4 +1,5 @@
-const { lockedNames } = require('../commands/lockname.js');
+const lockModule = require('../commands/lockname.js');
+const lockedNames = lockModule.lockedNames || {};
 
 module.exports.config = {
   name: "groupNameLock",

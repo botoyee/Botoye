@@ -2,7 +2,7 @@ const axios = require("axios");
 const fs = require("fs");
 
 module.exports.config = {
-  name: "masti",
+  name: "tokr",
   version: "1.0.1",
   hasPermssion: 0,
   credits: "Ayan Ali",
@@ -21,17 +21,16 @@ module.exports.run = async function ({ api, event, args }) {
   }
 
   try {
-    // Randomizer to fetch different results each time
+    // Random string to help get different results
     const random = Math.random().toString(36).substring(7);
     const finalQuery = `${query} ${random}`;
 
-    // Search for TikTok videos
+    // Search TikTok video — timeout removed
     const res = await axios.get("https://api.princetechn.com/api/search/tiktoksearch", {
       params: {
         apikey: "prince",
         query: finalQuery
-      },
-      timeout: 10000 // Add timeout for API calls
+      }
     });
 
     const result = res.data.results;
@@ -41,15 +40,16 @@ module.exports.run = async function ({ api, event, args }) {
       return api.sendMessage("😕 No video found. Try a different keyword.", threadID, messageID);
     }
 
-    // Download video using streaming
-    const writer = fs.createWriteStream(`temp-${Date.now()}.mp4`);
+    const fileName = `temp-${Date.now()}.mp4`;
+    const writer = fs.createWriteStream(fileName);
+
     const response = await axios({
       method: 'GET',
       url: result.no_watermark,
       responseType: 'stream'
+      // ✅ No timeout here
     });
 
-    // Handle stream events
     return new Promise((resolve, reject) => {
       response.data.pipe(writer);
 
@@ -63,23 +63,19 @@ module.exports.run = async function ({ api, event, args }) {
       });
 
       writer.on('close', () => {
-        // Send the downloaded video
+        // Send downloaded video
         api.sendMessage({
           body: `🎥 TikTok: ${result.title || "Untitled Video"}`,
-          attachment: fs.readFileSync(writer.path)
+          attachment: fs.readFileSync(fileName)
         }, threadID, messageID).then(() => {
-          // Clean up temporary file
-          fs.unlinkSync(writer.path);
+          // Cleanup
+          fs.unlinkSync(fileName);
         });
       });
     });
+
   } catch (err) {
     console.error("❌ Error:", err.message);
-    return api.sendMessage(
-      err.code === 'ECONNABORTED' 
-        ? "⚠️ Request timed out. Try again later."
-        : "⚠️ Failed to process video. Try again later.",
-      threadID, messageID
-    );
+    return api.sendMessage("⚠️ Failed to process video. Try again later.", threadID, messageID);
   }
 };

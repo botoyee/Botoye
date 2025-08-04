@@ -7,7 +7,7 @@ module.exports.config = {
     name: "music",
     version: "1.0.0",
     hasPermssion: 0,
-    credits: "Kashif",
+    credits: "𝙈𝙧𝙏𝙤𝙢𝙓𝙭𝙓",
     description: "Search and download music from YouTube",
     commandCategory: "media",
     usages: "[search query]",
@@ -30,23 +30,47 @@ module.exports.handleReply = async function({ api, event, handleReply }) {
     const processingMsg = await api.sendMessage('🎵 Downloading your music, please wait...', threadID, messageID);
     
     try {
-        // Use the download API - assuming it needs the video URL or ID
-        const downloadUrl = `https://api.princetechn.com/api/download/ytmp3?apikey=prince&url=${encodeURIComponent(selectedVideo.url)}`;
-        const downloadRes = await axios.get(downloadUrl, { timeout: 60000 });
+        // Use the download API - try different endpoints
+        let downloadUrl;
+        let downloadRes;
+        const videoUrl = selectedVideo.url || selectedVideo.link || `https://www.youtube.com/watch?v=${selectedVideo.id || selectedVideo.videoId}`;
+        
+        try {
+            // Try ytmp3 endpoint first
+            downloadUrl = `https://api.princetechn.com/api/download/ytmp3?apikey=prince&url=${encodeURIComponent(videoUrl)}`;
+            downloadRes = await axios.get(downloadUrl, { timeout: 60000 });
+        } catch (downloadError) {
+            console.log("ytmp3 endpoint failed, trying ytdl...");
+            try {
+                // Try ytdl endpoint as backup
+                downloadUrl = `https://api.princetechn.com/api/download/ytdl?apikey=prince&url=${encodeURIComponent(videoUrl)}&format=mp3`;
+                downloadRes = await axios.get(downloadUrl, { timeout: 60000 });
+            } catch (secondError) {
+                console.log("Both download endpoints failed:", secondError.message);
+                api.unsendMessage(processingMsg.messageID);
+                return api.sendMessage('❌ Download service temporarily unavailable. Please try again later.', threadID, messageID);
+            }
+        }
         
         console.log("Download API Response:", JSON.stringify(downloadRes.data, null, 2)); // Debug log
+        console.log("Download URL used:", downloadUrl);
         
         // Handle different possible response structures for download URL
         let audioDownloadUrl;
-        if (downloadRes.data && downloadRes.data.download) {
+        if (downloadRes.data && downloadRes.data.success === true && downloadRes.data.download) {
+            audioDownloadUrl = downloadRes.data.download;
+        } else if (downloadRes.data && downloadRes.data.download) {
             audioDownloadUrl = downloadRes.data.download;
         } else if (downloadRes.data && downloadRes.data.url) {
             audioDownloadUrl = downloadRes.data.url;
         } else if (downloadRes.data && downloadRes.data.result && downloadRes.data.result.download) {
             audioDownloadUrl = downloadRes.data.result.download;
+        } else if (downloadRes.data && downloadRes.data.result && downloadRes.data.result.url) {
+            audioDownloadUrl = downloadRes.data.result.url;
         } else {
+            console.log("Could not find download URL in response:", downloadRes.data);
             api.unsendMessage(processingMsg.messageID);
-            return api.sendMessage('❌ Failed to get download link. Please try again.', threadID, messageID);
+            return api.sendMessage(`❌ Failed to get download link: ${downloadRes.data?.message || downloadRes.data?.error || 'Unknown error'}`, threadID, messageID);
         }
         
         // Download the audio file
@@ -125,15 +149,27 @@ module.exports.run = async function({ api, event, args }) {
     const searchingMsg = await api.sendMessage('🔍 Searching for music, please wait...', threadID, messageID);
     
     try {
-        // Use the search API
-        const searchUrl = `https://api.princetechn.com/api/search/yts?apikey=prince&query=${encodeURIComponent(query)}`;
-        const searchRes = await axios.get(searchUrl, { timeout: 30000 });
+        // Use the search API - Try the correct YTS API endpoint
+        let searchUrl = `https://api.princetechn.com/api/search/yts?apikey=prince&query=${encodeURIComponent(query)}`;
+        let searchRes;
+        
+        try {
+            searchRes = await axios.get(searchUrl, { timeout: 30000 });
+        } catch (apiError) {
+            console.log("Primary API failed, trying alternative format...");
+            // Try alternative URL format if first fails
+            searchUrl = `https://api.princetechn.com/api/search/youtube?apikey=prince&query=${encodeURIComponent(query)}`;
+            searchRes = await axios.get(searchUrl, { timeout: 30000 });
+        }
         
         console.log("Search API Response:", JSON.stringify(searchRes.data, null, 2)); // Debug log
+        console.log("API URL used:", searchUrl);
         
         // Handle different possible response structures
         let results;
-        if (searchRes.data && searchRes.data.result && Array.isArray(searchRes.data.result)) {
+        if (searchRes.data && searchRes.data.success === true && searchRes.data.result && Array.isArray(searchRes.data.result)) {
+            results = searchRes.data.result;
+        } else if (searchRes.data && searchRes.data.result && Array.isArray(searchRes.data.result)) {
             results = searchRes.data.result;
         } else if (searchRes.data && Array.isArray(searchRes.data)) {
             results = searchRes.data;
@@ -141,10 +177,13 @@ module.exports.run = async function({ api, event, args }) {
             results = searchRes.data.data;
         } else if (searchRes.data && searchRes.data.videos && Array.isArray(searchRes.data.videos)) {
             results = searchRes.data.videos;
+        } else if (searchRes.data && searchRes.data.items && Array.isArray(searchRes.data.items)) {
+            results = searchRes.data.items;
         } else {
             console.log("Unexpected API response structure:", searchRes.data);
+            console.log("API might be returning error or different format");
             api.unsendMessage(searchingMsg.messageID);
-            return api.sendMessage('❌ No music found for your search query. Please try different keywords.', threadID, messageID);
+            return api.sendMessage(`❌ API Error: ${searchRes.data?.message || searchRes.data?.error || 'No music found'}. Please try different keywords.`, threadID, messageID);
         }
         
         if (!results || results.length === 0) {

@@ -1,61 +1,37 @@
 const axios = require("axios");
-let krMode = {};
 
-module.exports = {
-  config: {
-    name: "krpic",
-    aliases: [],
-    version: "1.0",
-    author: "Kashif",
-    countDown: 5,
-    role: 0,
-    shortDescription: {
-      en: "Kashif's AI picture generator"
-    },
-    longDescription: {
-      en: "Activate Kashif's AI and generate images using 'Kr <prompt>'"
-    },
-    category: "ai",
-    guide: {
-      en: "{pn} mod on"
-    }
-  },
+module.exports.config = {
+  name: "kr",
+  version: "1.0.1",
+  hasPermission: 0,
+  credits: "Kashif",
+  description: "Generate AI image using Stable Diffusion",
+  commandCategory: "AI",
+  usages: "[prompt]",
+  cooldowns: 5
+};
 
-  onStart: async function ({ message, event, args }) {
-    const uid = event.senderID;
-    const command = args.join(" ").toLowerCase();
+module.exports.run = async function ({ api, event, args }) {
+  const prompt = args.join(" ").trim();
+  if (!prompt) {
+    return api.sendMessage("⚠️ Prompt missing.\nUsage: sd <your prompt>", event.threadID, event.messageID);
+  }
 
-    if (command === "mod on") {
-      krMode[uid] = true;
-      message.reply("✅ *Kashif's AI Activated!* Now send a prompt like:\n➤ `Kr A beautiful girl`");
-    } else {
-      message.reply("❌ Usage: .krpic mod on");
-    }
-  },
+  try {
+    const response = await axios.get("https://api.princetechn.com/api/ai/sd", {
+      params: {
+        apikey: "prince",
+        prompt: prompt
+      },
+      responseType: "stream"
+    });
 
-  onChat: async function ({ event, message }) {
-    const uid = event.senderID;
-    const body = event.body;
-
-    if (!krMode[uid]) return;
-
-    if (body && body.toLowerCase().startsWith("kr")) {
-      const prompt = body.slice(2).trim();
-      if (!prompt) return message.reply("🔍 Prompt likho jaise: `Kr A girl smiling`");
-
-      try {
-        const res = await axios.get(`https://api.princetechn.com/api/ai/sd?apikey=prince&prompt=${encodeURIComponent(prompt)}`);
-        const imgURL = res.data?.image;
-
-        if (!imgURL) return message.reply("❌ Image generate nahi hui, try again.");
-
-        message.send({
-          body: "",
-          attachment: await global.utils.getStreamFromURL(imgURL)
-        });
-      } catch (e) {
-        message.reply("⚠️ Error: " + e.message);
-      }
-    }
+    return api.sendMessage({
+      body: `🧠 Prompt: ${prompt}`,
+      attachment: response.data
+    }, event.threadID, event.messageID);
+  } catch (err) {
+    console.error("❌ API Error:", err.message);
+    return api.sendMessage("❌ Image generate नहीं हो पाई. Please try again later or use another prompt.", event.threadID, event.messageID);
   }
 };

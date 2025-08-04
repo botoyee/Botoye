@@ -103,13 +103,10 @@ module.exports.handleEvent = async function ({ api, event }) {
   }
 
   const fallback = [
-    "Zaroorat se zyada cute mat bano 🥲",
-    "Sirf emoji? Dil ki baat toh bol 😏",
-    "Emoji daala, dil chura liya 💘",
-    "Yeh kaunsa secret code bheja? 😹"
-  ];
+    "" ];
   const randomReply = fallback[Math.floor(Math.random() * fallback.length)];
   return api.sendMessage(randomReply, threadID, messageID);
 };
 
 module.exports.run = function () {};
+

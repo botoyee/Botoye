@@ -7,19 +7,18 @@ module.exports.config = {
   credits: "Kashif x Ayan",
   description: "Gemini AI using custom backend",
   commandCategory: "ai",
-  usages: "[bot + message]",
+  usages: "Just mention 'Muskan' in your message",
   cooldowns: 2
 };
 
 const API_URL = "https://geminiw.onrender.com/chat";
-
 const chatHistories = {};
 
-module.exports.run = async function ({ api, event, args }) {
+module.exports.handleEvent = async function ({ api, event }) {
   const { threadID, messageID, senderID, body } = event;
-  const userMessage = args.join(" ");
+  if (!body || !body.toLowerCase().includes("muskan")) return;
 
-  if (!body.toLowerCase().includes("bot")) return;
+  const userMessage = body;
 
   if (!chatHistories[senderID]) {
     chatHistories[senderID] = [];
@@ -49,3 +48,6 @@ module.exports.run = async function ({ api, event, args }) {
     api.setMessageReaction("❌", messageID, () => {}, true);
   }
 };
+
+// Required to register the module without .command
+module.exports.run = () => {};

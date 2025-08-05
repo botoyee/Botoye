@@ -2,12 +2,12 @@ const axios = require("axios");
 
 module.exports.config = {
   name: "bot",
-  version: "1.0.0",
+  version: "2.0.0",
   hasPermssion: 0,
   credits: "Kashif x Ayan",
-  description: "Gemini AI using custom backend",
+  description: "Chat with Muskan by replying to her messages",
   commandCategory: "ai",
-  usages: "Just mention 'Muskan' in your message",
+  usages: "Just reply to Muskan's message",
   cooldowns: 2
 };
 
@@ -15,8 +15,10 @@ const API_URL = "https://geminiw.onrender.com/chat";
 const chatHistories = {};
 
 module.exports.handleEvent = async function ({ api, event }) {
-  const { threadID, messageID, senderID, body } = event;
-  if (!body || !body.toLowerCase().includes("muskan")) return;
+  const { threadID, messageID, senderID, body, messageReply } = event;
+
+  // Only respond if the message is a reply to Muskan (the bot)
+  if (!messageReply || messageReply.senderID !== api.getCurrentUserID()) return;
 
   const userMessage = body;
 
@@ -49,5 +51,5 @@ module.exports.handleEvent = async function ({ api, event }) {
   }
 };
 
-// Required to register the module without .command
+// Dummy run function to register module
 module.exports.run = () => {};

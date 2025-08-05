@@ -3,9 +3,9 @@ module.exports.config = {
   version: "1.0.2",
   hasPermssion: 0,
   credits: "Ayan Ali",
-  description: "Funny desi replies when someone mentions 'bot', with @mention",
+  description: "Funny desi replies when someone types only 'bot'",
   commandCategory: "fun",
-  usages: "auto bot reply",
+  usages: "Type exactly 'bot'",
   cooldowns: 2,
   listenEvents: true // ✅ Required to make handleEvent work
 };
@@ -14,8 +14,10 @@ module.exports.handleEvent = async function ({ api, event }) {
   const { body, threadID, messageID, senderID } = event;
   if (!body) return;
 
-  const lowerCaseMsg = body.toLowerCase();
-  if (!lowerCaseMsg.includes("bot")) return;
+  const lowerCaseMsg = body.toLowerCase().trim();
+
+  // ✅ Only trigger when message is exactly "bot"
+  if (lowerCaseMsg !== "bot") return;
 
   try {
     const userInfo = await api.getUserInfo(senderID);

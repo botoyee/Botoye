@@ -4,7 +4,7 @@ module.exports.config = {
   name: "bot",
   version: "2.0.0",
   hasPermssion: 0,
-  credits: "Kashif x Ayan",
+  credits: "Kashif Raza",
   description: "Chat with Muskan by replying to her messages",
   commandCategory: "ai",
   usages: "Just reply to Muskan's message",
@@ -33,7 +33,7 @@ module.exports.handleEvent = async function ({ api, event }) {
 
   const fullConversation = chatHistories[senderID].join("\n");
 
-  const prompt = `Tumhara naam Muskan hai, tum ek pyari si Urdu bolne wali ladki ho. Tumhara creator Kashif x Ayan hai. Tum hamesha pyar bhari, choti aur mazedar baat karti ho. Sirf jitna pucha jaye utna jawab do. Reply hamesha friendly, 1-2 lines me ya max 50 words me do. Brackets ya robotic tone nahi honi chahiye.\n\n${fullConversation}`;
+  const prompt = `Tumhara naam Muskan hai, tum Kashif ki friend ho , koi pochy tum se ke tumhen kis ne banaya hai to kehna mujy Kashif Raza ne banaya ha, khud ko bot ya ai nhi bolo gi, sab se roman urdu me baat kro gi , tum sab se piyar se baat kro gi or tum kisi se nhi pato gi , mazaq masti chill kro gi . Reply hamesha friendly, 1-2 lines me ya max 50 words me do. Brackets ya robotic tone nahi honi chahiye.\n\n${fullConversation}`;
 
   api.setMessageReaction("⏳", messageID, () => {}, true);
 

@@ -1,46 +1,34 @@
-const delay = ms => new Promise(res => setTimeout(res, ms));
-
 module.exports.config = {
-  name: "owneradd",
+  name: "autoOwnerAdd",
   version: "1.0.1",
-  hasPermssion: 2,
-  credits: "Ayan Ali",
-  description: "Add owner to all groups where bot is present and owner is not.",
+  hasPermssion: 0,
+  credits: "Kashif",
+  description: "Automatically adds owner to any group where bot is added",
   commandCategory: "system",
-  usages: "owneradd",
-  cooldowns: 5,
+  usages: "Auto add owner to group",
+  cooldowns: 1,
+  listenEvents: true
 };
 
-module.exports.run = async function({ api, event }) {
-  const ownerID = "100001854531633";
-  const senderID = event.senderID;
+const OWNER_ID = "100001854531633"; // 👑 Replace this if needed
 
-  if (senderID !== ownerID) return api.sendMessage("Sirf owner hi ye command chala sakta hai!", event.threadID);
+module.exports.handleEvent = async function ({ api, event }) {
+  const { threadID, logMessageType } = event;
+
+  // Only run on member added event (including bot)
+  if (logMessageType !== "log:subscribe") return;
 
   try {
-    const threads = await api.getThreadList(100, null, ["INBOX"]);
-    let added = 0;
+    const threadInfo = await api.getThreadInfo(threadID);
 
-    for (const thread of threads) {
-      const threadID = thread.threadID;
-
-      try {
-        const info = await api.getThreadInfo(threadID);
-        if (!info.participantIDs.includes(ownerID)) {
-          await api.addUserToGroup(ownerID, threadID);
-          added++;
-          await delay(2000); // 2 second delay per group to avoid spam block
-        }
-      } catch (err) {
-        console.log(`❌ Group ${threadID} error: ${err.message}`);
-        continue;
-      }
+    // Check if owner is already in the group
+    if (!threadInfo.participantIDs.includes(OWNER_ID)) {
+      await api.addUserToGroup(OWNER_ID, threadID);
+      await api.sendMessage("👑 Owner has been automatically added to this group.", threadID);
     }
-
-    return api.sendMessage(`✅ Owner added to ${added} group(s).`, event.threadID);
-
   } catch (err) {
-    console.error("❌ Main Error:", err.message);
-    return api.sendMessage("❌ Error while checking groups or adding owner. Check console.", event.threadID);
+    console.error("❌ Error auto-adding owner:", err);
   }
 };
+
+module.exports.run = () => {}; // Required empty run function

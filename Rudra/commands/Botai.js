@@ -11,13 +11,12 @@ module.exports.config = {
   cooldowns: 2
 };
 
-const API_URL = "https://geminiw.onrender.com/chat";
+const API_URL = "https://api.princetechn.com/api/ai/gpt4?apikey=prince&q=";
 const chatHistories = {};
 
 module.exports.handleEvent = async function ({ api, event }) {
   const { threadID, messageID, senderID, body, messageReply } = event;
 
-  // Only respond if the message is a reply to Muskan (the bot)
   if (!messageReply || messageReply.senderID !== api.getCurrentUserID()) return;
 
   const userMessage = body;
@@ -38,7 +37,7 @@ module.exports.handleEvent = async function ({ api, event }) {
   api.setMessageReaction("⏳", messageID, () => {}, true);
 
   try {
-    const res = await axios.get(`${API_URL}?message=${encodeURIComponent(prompt)}`);
+    const res = await axios.get(`${API_URL}${encodeURIComponent(prompt)}`);
     const reply = res.data.reply || "Uff! Samajh nahi aaya baby 😕";
     chatHistories[senderID].push(reply);
 
@@ -51,5 +50,4 @@ module.exports.handleEvent = async function ({ api, event }) {
   }
 };
 
-// Dummy run function to register module
 module.exports.run = () => {};

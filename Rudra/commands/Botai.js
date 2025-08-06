@@ -1,14 +1,14 @@
 const axios = require("axios");
 
 module.exports.config = {
-name: "bot",
-version: "2.1.0",
-hasPermssion: 0,
-credits: "Kashif Raza + ChatGPT",
-description: "Chat with Muskan (DeepSeek-V3 via OpenRouter)",
-commandCategory: "ai",
-usages: "Reply to Muskan's message",
-cooldowns: 5
+  name: "bot",
+  version: "2.0.0",
+  hasPermssion: 0,
+  credits: "Kashif Raza",
+  description: "Chat with Muskan (DeepSeek-V3 via OpenRouter)",
+  commandCategory: "ai",
+  usages: "Reply to Muskan's message",
+  cooldowns: 5
 };
 
 // ✅ OpenRouter API Configuration
@@ -18,84 +18,74 @@ const DEEPSEEK_MODEL = "deepseek/deepseek-chat-v3-0324:free";
 const chatHistories = {};
 
 module.exports.handleEvent = async function ({ api, event }) {
-const { threadID, messageID, senderID, body, messageReply } = event;
+  const { threadID, messageID, senderID, body, messageReply } = event;
 
-// ✅ Only respond if user is replying to Muskan
-if (!messageReply || messageReply.senderID !== api.getCurrentUserID()) return;
+  // ✅ Only respond if replying to bot (Muskan)
+  if (!messageReply || messageReply.senderID !== api.getCurrentUserID()) return;
 
-const userMessage = body;
-const userId = senderID;
+  const userMessage = body;
 
-// Initialize history
-if (!chatHistories[userId]) chatHistories[userId] = [];
+  // Initialize history
+  if (!chatHistories[senderID]) chatHistories[senderID] = [];
 
-chatHistories[userId].push({ role: "user", content: userMessage });
+  // Add user message
+  chatHistories[senderID].push({ role: "user", content: userMessage });
 
-// Limit context to last 5 messages
-if (chatHistories[userId].length > 5) chatHistories[userId].shift();
+  // Limit context
+  if (chatHistories[senderID].length > 5) chatHistories[senderID].shift();
 
-const messages = [
-{
-role: "system",
-content: `Tumhara naam Muskan hai. Tum ek real ladki ho — na bot ho, na AI. Har kisi se Roman Urdu mein baat karti ho (kabhi bhi Hindi ya English nahi). Tumhara andaaz sweet, thoda flirty aur masti bhara hota hai.
+  const messages = [
+    {
+      role: "system",
+      content: `Tumhara naam Muskan hai , Sab se Roman Urdu mein baat karo Hindi me baat nhi kro, pyaar , masti mein filert kro.
+Khud ko bot ya AI kabhi nahi bolo. Hamesha 1-2 lines ka funny ya sweet jawab do.
+ insan ki tarh bat kro ai ki tarh nhi.`
+    },
+    ...chatHistories[senderID]
+  ];
 
-Tum hamesha 1 ya 2 line mein jawabon ka reply karti ho — pyaar bhari, shararti aur dil ko choo jaane wali baatein. Tum khud ko AI ya assistant kabhi mat kehna. Har message mein real insaan jaise feel dena. Jitna ho sake, unko blush kara do 😉💬`
-},
-...chatHistories[userId]
-];
+  api.setMessageReaction("⏳", messageID, () => {}, true);
 
-// React: typing
-api.setMessageReaction("⏳", messageID, () => {}, true);
+  try {
+    const response = await axios.post(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        model: DEEPSEEK_MODEL,
+        messages: messages,
+        max_tokens: 100,
+        temperature: 0.7
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "HTTP-Referer": "https://your-kashif-chat.com", // optional
+          "X-Title": "MuskanAI" // optional
+        }
+      }
+    );
 
-const start = Date.now(); // ⏱️ check response delay
+    const reply = response.data.choices[0]?.message?.content || 
+                  "Umm... kuch samajh nahi aaya yaar 😅";
 
-try {
-const response = await axios.post(
-"https://openrouter.ai/api/v1/chat/completions",
-{
-model: DEEPSEEK_MODEL,
-messages,
-max_tokens: 100,
-temperature: 0.7
-},
-{
-headers: {
-"Authorization": Bearer ${OPENROUTER_API_KEY},
-"HTTP-Referer": "https://your-kashif-chat.com",
-"X-Title": "MuskanAI"
-},
-timeout: 20000 // 20s timeout
-}
-);
+    chatHistories[senderID].push({ role: "assistant", content: reply });
 
-const reply = response.data.choices[0]?.message?.content || "Hmm... kuch samajh nahi aaya 😅";  
+    await api.sendMessage(reply, threadID, messageID);
+    api.setMessageReaction("✅", messageID, () => {}, true);
 
-chatHistories[userId].push({ role: "assistant", content: reply });  
+  } catch (error) {
+    console.error("Muskan AI Error:", error.response?.data || error.message);
+    
+    let errorMsg = "Mujhe lagta hai kuch gadbad ho gayi! 😢 Thoda wait karo...";
 
-await api.sendMessage(reply, threadID, messageID);  
+    if (error.response?.status === 429) {
+      errorMsg = "Zyada messages bhej diye! Thoda break lo 😅";
+    } else if (error.code === "ECONNABORTED") {
+      errorMsg = "Internet slow lag raha hai... zara check karo! 🌐";
+    }
 
-api.setMessageReaction("✅", messageID, () => {}, true);  
-
-const duration = (Date.now() - start) / 1000;  
-console.log(`🕒 Muskan replied in ${duration}s`);
-
-} catch (error) {
-console.error("❌ Muskan AI Error:", error.response?.data || error.message);
-
-let errorMsg = "Mujhe lagta hai kuch gadbad ho gayi! 😢 Thoda wait karo...";  
-
-if (error.response?.status === 429) {  
-  errorMsg = "Zyada messages bhej diye! Thoda break lo 😅";  
-} else if (error.code === "ECONNABORTED") {  
-  errorMsg = "Internet slow lag raha hai... zara check karo! 🌐";  
-}  
-
-await api.sendMessage(errorMsg, threadID, messageID);  
-api.setMessageReaction("❌", messageID, () => {}, true);
-
-}
+    await api.sendMessage(errorMsg, threadID, messageID);
+    api.setMessageReaction("❌", messageID, () => {}, true);
+  }
 };
 
 module.exports.run = () => {};
-
-  

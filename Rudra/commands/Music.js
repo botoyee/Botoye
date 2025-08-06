@@ -2,15 +2,16 @@ const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 
-// Cache for storing search results per user
+// Cache with expiration (1 hour)
 const searchCache = new Map();
+const CACHE_EXPIRATION = 60 * 60 * 1000; 
 
 module.exports.config = {
   name: "music",
-  version: "2.0.0",
+  version: "2.1.0",
   hasPermssion: 0,
-  credits: "Modified by ChatGPT | API by PrinceTech",
-  description: "Search and download music from YouTube",
+  credits: "Your Name",
+  description: "Search and download high quality music",
   commandCategory: "media",
   usages: ".music [song name]",
   cooldowns: 5,
@@ -21,43 +22,53 @@ module.exports.run = async function ({ api, event, args }) {
     const query = args.join(" ");
     if (!query) {
       return api.sendMessage(
-        "❌ Please provide a song name. Example: .music tum hi ho",
+        "🎵 Please enter a song name!\nExample: .music Shape of You",
         event.threadID,
         event.messageID
       );
     }
 
-    // Show searching indicator
     api.setMessageReaction("🔍", event.messageID, () => {}, true);
 
-    const searchUrl = `https://api.princetechn.com/api/search/yts?apikey=prince&query=${encodeURIComponent(query)}`;
-    const res = await axios.get(searchUrl, { timeout: 15000 });
+    // Try multiple search APIs if first fails
+    const APIs = [
+      `https://api.princetechn.com/api/search/yts?apikey=prince&query=${encodeURIComponent(query)}`,
+      `https://api.somebackup.com/search?q=${encodeURIComponent(query)}`
+    ];
 
-    if (!res.data?.result?.length) {
+    let res;
+    for (const apiUrl of APIs) {
+      try {
+        res = await axios.get(apiUrl, { timeout: 10000 });
+        if (res.data?.result?.length) break;
+      } catch (e) {
+        console.log(`Trying next API...`);
+      }
+    }
+
+    if (!res?.data?.result?.length) {
       return api.sendMessage(
-        "😢 No results found for your search.",
+        `🔎 No results found for "${query}"\n\nTry:\n• Different keywords\n• English song titles\n• Checking spelling`,
         event.threadID,
         event.messageID
       );
     }
 
-    const list = res.data.result.slice(0, 6); // Get top 6 results
-    let msg = "🎵 Search results:\n\n";
-    list.forEach((vid, i) => {
-      msg += `${i + 1}. ${vid.title} (${vid.duration})\n`;
+    const list = res.data.result.slice(0, 6);
+    let msg = "🎧 Search Results:\n\n";
+    list.forEach((item, i) => {
+      msg += `${i+1}. ${item.title} (${item.duration || 'N/A'})\n`;
     });
-    msg += "\n💬 Reply with the number (1-6) to download the song";
+    msg += "\nReply with the song number (1-6) to download";
 
-    // Store results in cache
-    searchCache.set(event.senderID, list);
+    // Cache with timestamp
+    searchCache.set(event.senderID, {
+      results: list,
+      timestamp: Date.now()
+    });
 
     return api.sendMessage(msg, event.threadID, (err, info) => {
-      if (err) {
-        console.error("Error sending message:", err);
-        return;
-      }
-      
-      // Register reply handler
+      if (err) return console.error(err);
       global.client.handleReply.push({
         name: this.config.name,
         messageID: info.messageID,
@@ -67,10 +78,9 @@ module.exports.run = async function ({ api, event, args }) {
     });
 
   } catch (error) {
-    console.error("Music search error:", error);
-    api.setMessageReaction("❌", event.messageID, () => {}, true);
-    return api.sendMessage(
-      "❌ Error searching for music. Please try again later.",
+    console.error("Search Error:", error);
+    api.sendMessage(
+      "⚠️ Music service unavailable. Try again later",
       event.threadID,
       event.messageID
     );
@@ -79,88 +89,90 @@ module.exports.run = async function ({ api, event, args }) {
 
 module.exports.handleReply = async function ({ api, event, handleReply }) {
   try {
-    // Verify this reply is for our command
     if (handleReply.author !== event.senderID) return;
-    if (handleReply.type !== "music_select") return;
 
     const choice = parseInt(event.body);
     if (isNaN(choice) || choice < 1 || choice > 6) {
       return api.sendMessage(
-        "❌ Please reply with a number between 1 and 6.",
+        "❌ Please reply with a number between 1-6",
         event.threadID,
         event.messageID
       );
     }
 
-    const cachedResults = searchCache.get(event.senderID);
-    if (!cachedResults) {
+    const cacheData = searchCache.get(event.senderID);
+    if (!cacheData || Date.now() - cacheData.timestamp > CACHE_EXPIRATION) {
       return api.sendMessage(
-        "❌ Search expired. Please search again.",
+        "⌛ Search expired. Please search again",
         event.threadID,
         event.messageID
       );
     }
 
-    const video = cachedResults[choice - 1];
-    if (!video?.url) {
-      return api.sendMessage(
-        "❌ Invalid video selection.",
-        event.threadID,
-        event.messageID
-      );
-    }
-
-    // Show downloading indicator
+    const video = cacheData.results[choice-1];
     api.setMessageReaction("⏳", event.messageID, () => {}, true);
 
-    const downloadUrl = `https://api.princetechn.com/api/download/yta?apikey=prince&url=${encodeURIComponent(video.url)}`;
-    const res = await axios.get(downloadUrl, { timeout: 20000 });
+    // Try multiple download APIs
+    const downloadAPIs = [
+      `https://api.princetechn.com/api/download/yta?apikey=prince&url=${encodeURIComponent(video.url)}`,
+      `https://api.backup.com/download?url=${encodeURIComponent(video.url)}`
+    ];
 
-    if (!res.data?.result?.download_url) {
+    let songData;
+    for (const apiUrl of downloadAPIs) {
+      try {
+        const res = await axios.get(apiUrl, { timeout: 15000 });
+        if (res.data?.result) {
+          songData = res.data.result;
+          break;
+        }
+      } catch (e) {
+        console.log(`Trying next download API...`);
+      }
+    }
+
+    if (!songData?.download_url) {
       return api.sendMessage(
-        "❌ Failed to get download link. The video may be restricted.",
+        "❌ Couldn't download this song. Try another one",
         event.threadID,
         event.messageID
       );
     }
 
-    const song = res.data.result;
-    const timestamp = Date.now();
-    const filePath = path.join(__dirname, `cache/${timestamp}_music.mp3`);
-    const thumbPath = path.join(__dirname, `cache/${timestamp}_thumb.jpg`);
-
-    // Download files in parallel
-    const [audioRes, thumbRes] = await Promise.all([
-      axios.get(song.download_url, { responseType: "arraybuffer", timeout: 30000 }),
-      axios.get(song.thumbnail, { responseType: "arraybuffer", timeout: 15000 })
+    const time = Date.now();
+    const [audio, thumb] = await Promise.all([
+      axios.get(songData.download_url, { responseType: "arraybuffer", timeout: 30000 }),
+      axios.get(songData.thumbnail || 'https://i.imgur.com/8QZQZQZ.png', { responseType: "arraybuffer" })
     ]);
+
+    const filePath = path.join(__dirname, `cache/music_${time}.mp3`);
+    const thumbPath = path.join(__dirname, `cache/thumb_${time}.jpg`);
 
     await Promise.all([
-      fs.writeFile(filePath, audioRes.data),
-      fs.writeFile(thumbPath, thumbRes.data)
+      fs.writeFile(filePath, audio.data),
+      fs.writeFile(thumbPath, thumb.data)
     ]);
 
-    // Send results
     await api.sendMessage({
-      body: `🎧 ${song.title}\n⏱ Duration: ${song.duration}`,
+      body: `🎶 ${songData.title || 'Unknown Track'}\n⏱ ${songData.duration || 'N/A'}`,
       attachment: fs.createReadStream(thumbPath)
     }, event.threadID);
 
     await api.sendMessage({
-      body: `🎶 Here's your song: ${song.title}`,
       attachment: fs.createReadStream(filePath)
     }, event.threadID);
 
     // Cleanup
-    fs.unlink(filePath, () => {});
-    fs.unlink(thumbPath, () => {});
+    [filePath, thumbPath].forEach(file => {
+      fs.unlink(file, () => {});
+    });
+
     api.setMessageReaction("✅", event.messageID, () => {}, true);
 
   } catch (error) {
-    console.error("Music download error:", error);
-    api.setMessageReaction("❌", event.messageID, () => {}, true);
+    console.error("Download Error:", error);
     api.sendMessage(
-      "❌ Error downloading music. Please try another song.",
+      "⚠️ Error downloading song. Please try another",
       event.threadID,
       event.messageID
     );

@@ -11,8 +11,8 @@ module.exports.config = {
   cooldowns: 5
 };
 
-// OpenRouter API Configuration (DeepSeek-V3)
-const OPENROUTER_API_KEY = "your-api-key-here"; // 🔴 Replace with your OpenRouter key!
+// ✅ OpenRouter API Configuration
+const OPENROUTER_API_KEY = "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";
 const DEEPSEEK_MODEL = "deepseek/deepseek-chat-v3-0324:free";
 
 const chatHistories = {};
@@ -20,34 +20,26 @@ const chatHistories = {};
 module.exports.handleEvent = async function ({ api, event }) {
   const { threadID, messageID, senderID, body, messageReply } = event;
 
-  // Only respond if the message is a reply to Muskan (the bot)
+  // ✅ Only respond if replying to bot (Muskan)
   if (!messageReply || messageReply.senderID !== api.getCurrentUserID()) return;
 
   const userMessage = body;
 
-  // Initialize chat history if not exists
-  if (!chatHistories[senderID]) {
-    chatHistories[senderID] = [];
-  }
+  // Initialize history
+  if (!chatHistories[senderID]) chatHistories[senderID] = [];
 
-  // Add user message to history
+  // Add user message
   chatHistories[senderID].push({ role: "user", content: userMessage });
 
-  // Keep only the last 5 messages (to avoid long context)
-  if (chatHistories[senderID].length > 5) {
-    chatHistories[senderID].shift();
-  }
+  // Limit context
+  if (chatHistories[senderID].length > 5) chatHistories[senderID].shift();
 
-  // Prepare the AI's personality & conversation history
   const messages = [
     {
       role: "system",
-      content: `You are Muskan, a friendly AI created by Kashif Raza. Follow these rules:
-      - Always reply in Roman Urdu (no English unless needed)
-      - Keep responses short (1-2 lines max)
-      - Be playful, sweet, and funny 😊
-      - Never say you're an AI or bot
-      - Use emojis sometimes (but not too much)`
+      content: `Tumhara naam Muskan hai , Sab se Roman Urdu mein baat karo Hindi me baat nhi kro, pyaar , masti mein filert kro.
+Khud ko bot ya AI kabhi nahi bolo. Hamesha 1-2 lines ka funny ya sweet jawab do.
+ insan ki tarh bat kro ai ki tarh nhi.`
     },
     ...chatHistories[senderID]
   ];
@@ -66,16 +58,15 @@ module.exports.handleEvent = async function ({ api, event }) {
       {
         headers: {
           "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-          "HTTP-Referer": "https://www.your-site.com", // Optional (for OpenRouter stats)
-          "X-Title": "Muskan AI Bot" // Optional (for OpenRouter stats)
+          "HTTP-Referer": "https://your-kashif-chat.com", // optional
+          "X-Title": "MuskanAI" // optional
         }
       }
     );
 
     const reply = response.data.choices[0]?.message?.content || 
-                  "Oops! Mein thori confused hoon, phir try karo? 😅";
+                  "Umm... kuch samajh nahi aaya yaar 😅";
 
-    // Save AI's reply to chat history
     chatHistories[senderID].push({ role: "assistant", content: reply });
 
     await api.sendMessage(reply, threadID, messageID);
@@ -85,11 +76,11 @@ module.exports.handleEvent = async function ({ api, event }) {
     console.error("Muskan AI Error:", error.response?.data || error.message);
     
     let errorMsg = "Mujhe lagta hai kuch gadbad ho gayi! 😢 Thoda wait karo...";
-    
+
     if (error.response?.status === 429) {
-      errorMsg = "Too many requests! Thoda slow karo, baad mein try karna 😅";
+      errorMsg = "Zyada messages bhej diye! Thoda break lo 😅";
     } else if (error.code === "ECONNABORTED") {
-      errorMsg = "Server ne reply nahi diya... Internet check karo! 🌐";
+      errorMsg = "Internet slow lag raha hai... zara check karo! 🌐";
     }
 
     await api.sendMessage(errorMsg, threadID, messageID);

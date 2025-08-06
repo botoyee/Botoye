@@ -4,81 +4,71 @@ const path = require("path");
 
 module.exports.config = {
   name: "music",
-  version: "3.1.0",
+  version: "3.0.1",
   hasPermssion: 0,
-  credits: "Your Name",
-  description: "Fixed Music Search & Download",
+  credits: "Your Name (Fixed by ChatGPT)",
+  description: "Search & download YouTube music",
   commandCategory: "media",
-  usages: ".music [song]",
+  usages: ".music [song name]",
   cooldowns: 5
 };
 
-// Enhanced with proper headers and multiple fallback APIs
-const API_ENDPOINTS = [
-  {
-    url: "https://api.princetechn.com/api/search/yts",
-    params: { apikey: "prince", query: "" },
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      "Accept": "application/json",
-      "Origin": "https://www.youtube.com",
-      "Referer": "https://www.youtube.com/"
-    }
-  },
-  {
-    url: "https://yt-api.p.rapidapi.com/search",
-    params: { query: "" },
-    headers: {
-      "X-RapidAPI-Key": "your-rapidapi-key",
-      "X-RapidAPI-Host": "yt-api.p.rapidapi.com"
-    }
+async function testApi(query) {
+  const testUrl = `https://api.princetechn.com/api/search/yts?apikey=prince&query=${encodeURIComponent(query)}`;
+  try {
+    const response = await axios.get(testUrl, { timeout: 10000 });
+    console.log("API Test Full Response:", JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (e) {
+    console.error("API Test Failed:", e.message);
+    return null;
   }
-];
+}
 
 module.exports.run = async function({ api, event, args }) {
   try {
     const query = args.join(" ");
     if (!query) return api.sendMessage("🎵 Please enter a song name", event.threadID);
 
+    // React and notify
     api.setMessageReaction("🔍", event.messageID, () => {}, true);
+    api.sendMessage(`🔎 Searching music for: "${query}"`, event.threadID);
 
-    // Try all API endpoints until one works
-    let results;
-    for (const endpoint of API_ENDPOINTS) {
-      try {
-        const fullUrl = `${endpoint.url}?${new URLSearchParams({...endpoint.params, query}).toString()}`;
-        console.log(`Trying API: ${fullUrl}`);
-        
-        const res = await axios.get(fullUrl, {
-          headers: endpoint.headers,
-          timeout: 10000
-        });
-
-        if (res.data?.results?.length || res.data?.result?.length) {
-          results = res.data.results || res.data.result;
-          break;
-        }
-      } catch (e) {
-        console.log(`API Failed: ${endpoint.url}`, e.message);
-      }
-    }
-
-    if (!results?.length) {
+    const apiTest = await testApi(query);
+    if (!apiTest?.results?.length) {
       return api.sendMessage(
-        `🔴 No results found for "${query}"\n\nPossible fixes:\n1. Try different keywords\n2. Use English song titles\n3. Check spelling\n\nDebug: All APIs failed`,
+        `🔴 API Error but works manually?\n\nTry:\n1. Wait 5 mins\n2. Use VPN\n3. Contact admin\n\nDebug: ${apiTest ? "Empty results" : "API failed"}`,
         event.threadID
       );
     }
 
-    const list = results.slice(0, 6);
+    const res = await axios.get(
+      `https://api.princetechn.com/api/search/yts?apikey=prince&query=${encodeURIComponent(query)}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+          "Accept": "application/json"
+        },
+        timeout: 15000
+      }
+    );
+
+    if (!res.data?.results?.length) {
+      return api.sendMessage(`❌ No results for "${query}"`, event.threadID);
+    }
+
+    const list = res.data.results.slice(0, 6);
     let msg = "🎧 Results:\n\n";
     list.forEach((item, i) => {
-      msg += `${i+1}. ${item.title} (${item.duration || 'N/A'})\n`;
+      msg += `${i + 1}. ${item.title} (${item.duration?.timestamp || "?"})\n`;
     });
     msg += "\nReply 1-6 to download";
 
     global.musicCache = { ...global.musicCache, [event.senderID]: list };
-    
+
+    // ✅ Add final reaction
+    api.setMessageReaction("✅", event.messageID, () => {}, true);
+
     return api.sendMessage(msg, event.threadID, (err, info) => {
       if (err) return console.error(err);
       global.client.handleReply.push({
@@ -90,9 +80,9 @@ module.exports.run = async function({ api, event, args }) {
     });
 
   } catch (err) {
-    console.error("Full Error:", err);
+    console.error("Run Error:", err);
     return api.sendMessage(
-      `⚠️ Critical Error:\n\nStatus: ${err.response?.status || "Unknown"}\nMessage: ${err.message}`,
+      `⚠️ Error:\n\n• Status: ${err.response?.status || "Unknown"}\n• Message: ${err.message}`,
       event.threadID
     );
   }
@@ -101,7 +91,7 @@ module.exports.run = async function({ api, event, args }) {
 module.exports.handleReply = async function({ api, event, handleReply }) {
   try {
     if (handleReply.author !== event.senderID) return;
-    
+
     const choice = parseInt(event.body);
     if (isNaN(choice) || choice < 1 || choice > 6) {
       return api.sendMessage("❌ Invalid choice. Reply with 1-6", event.threadID);
@@ -110,34 +100,17 @@ module.exports.handleReply = async function({ api, event, handleReply }) {
     const cache = global.musicCache?.[event.senderID];
     if (!cache) return api.sendMessage("⌛ Session expired. Search again", event.threadID);
 
-    const video = cache[choice-1];
-    if (!video?.url) return api.sendMessage("❌ Invalid video data", event.threadID);
-
-    api.setMessageReaction("⏳", event.messageID, () => {}, true);
-
-    // Try multiple download sources
-    const downloadSources = [
+    const video = cache[choice - 1];
+    const downloadRes = await axios.get(
       `https://api.princetechn.com/api/download/yta?apikey=prince&url=${encodeURIComponent(video.url)}`,
-      `https://ytdl-api.p.rapidapi.com/download?url=${encodeURIComponent(video.url)}`
-    ];
+      { timeout: 20000 }
+    );
 
-    let song;
-    for (const source of downloadSources) {
-      try {
-        const res = await axios.get(source, { timeout: 15000 });
-        if (res.data?.result) {
-          song = res.data.result;
-          break;
-        }
-      } catch (e) {
-        console.log(`Download source failed: ${source}`);
-      }
+    if (!downloadRes.data?.result?.download_url) {
+      return api.sendMessage("❌ Download failed. Try another song.", event.threadID);
     }
 
-    if (!song?.download_url) {
-      return api.sendMessage("❌ All download sources failed", event.threadID);
-    }
-
+    const song = downloadRes.data.result;
     const time = Date.now();
     const paths = {
       audio: path.join(__dirname, `cache/music_${time}.mp3`),
@@ -146,7 +119,7 @@ module.exports.handleReply = async function({ api, event, handleReply }) {
 
     const [audio, thumb] = await Promise.all([
       axios.get(song.download_url, { responseType: "arraybuffer", timeout: 30000 }),
-      axios.get(song.thumbnail || 'https://i.ytimg.com/vi/default.jpg', { responseType: "arraybuffer" })
+      axios.get(song.thumbnail, { responseType: "arraybuffer" })
     ]);
 
     await Promise.all([
@@ -154,21 +127,22 @@ module.exports.handleReply = async function({ api, event, handleReply }) {
       fs.writeFile(paths.thumb, thumb.data)
     ]);
 
+    // Send thumbnail first (clean)
     await api.sendMessage({
-      body: `🎶 ${song.title || 'Unknown Track'}\n⏱ ${song.duration || 'N/A'}`,
       attachment: fs.createReadStream(paths.thumb)
     }, event.threadID);
 
+    // Then send title + audio
     await api.sendMessage({
+      body: `🎶 ${song.title}\n⏱ ${song.duration}`,
       attachment: fs.createReadStream(paths.audio)
     }, event.threadID);
 
     // Cleanup
     Object.values(paths).forEach(p => fs.unlink(p, () => {}));
-    api.setMessageReaction("✅", event.messageID, () => {}, true);
 
   } catch (err) {
     console.error("Download Error:", err);
-    api.sendMessage(`⚠️ Download failed: ${err.message}`, event.threadID);
+    api.sendMessage(`⚠️ Download failed:\n\n${err.message}`, event.threadID);
   }
 };

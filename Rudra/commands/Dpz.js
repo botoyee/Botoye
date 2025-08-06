@@ -1,45 +1,56 @@
-const axios = require("axios");
+module.exports.config = {
+  name: "dpz",
+  version: "1.0.0",
+  hasPermssion: 0,
+  credits: "Modified by ChatGPT for Kashif Raza",
+  description: "Send random boys stylish DP images",
+  commandCategory: "Utility",
+  usages: ".dpz boys stylish dpz",
+  cooldowns: 3,
+  dependencies: {
+    "axios": "",
+    "fs-extra": ""
+  }
+};
 
-module.exports = {
-  config: {
-    name: "dpz",
-    version: "1.0",
-    author: "ChatGPT",
-    countDown: 5,
-    role: 0,
-    shortDescription: "Send random DP images",
-    longDescription: "Get 20 random stylish DP images based on your search",
-    category: "image",
-    guide: {
-      en: "{p}dpz [search term]\nExample: {p}dpz boys stylish dpz"
+module.exports.run = async function ({ api, event }) {
+  const axios = require("axios");
+  const fs = require("fs-extra");
+
+  const { threadID, messageID } = event;
+
+  try {
+    const res = await axios.get("https://api.princetechn.com/api/search/googleimage?apikey=prince&query=boys+stylish+dp");
+
+    if (!res.data || !res.data.length) {
+      return api.sendMessage("Kuch bhi nahi mila! 😢 Baad mein try karo.", threadID, messageID);
     }
-  },
 
-  onStart: async function ({ api, event, args }) {
-    try {
-      const query = args.join(" ") || "boys stylish dpz";
-      const apiKey = "prince";
-      const apiUrl = `https://api.princetechn.com/api/search/googleimage?apikey=${apiKey}&query=${encodeURIComponent(query)}`;
+    // Pick 20 random images
+    const shuffled = res.data.sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, 20);
 
-      const res = await axios.get(apiUrl);
-      const images = res.data;
+    // Download and prepare images
+    const images = [];
 
-      if (!Array.isArray(images) || images.length === 0) {
-        return api.sendMessage("😢 Sorry, no images found!", event.threadID, event.messageID);
-      }
-
-      // Random 20 images
-      const shuffled = images.sort(() => 0.5 - Math.random());
-      const selected = shuffled.slice(0, 20);
-
-      // Send images one by one
-      for (let i = 0; i < selected.length; i++) {
-        api.sendMessage({ attachment: await global.utils.getStreamFromURL(selected[i]) }, event.threadID);
-      }
-
-    } catch (err) {
-      console.error(err);
-      api.sendMessage("❌ Error fetching images. Try again later.", event.threadID, event.messageID);
+    for (let i = 0; i < selected.length; i++) {
+      const imgRes = await axios.get(selected[i], { responseType: "arraybuffer" });
+      const path = __dirname + `/cache/dpz${i}.jpg`;
+      fs.writeFileSync(path, imgRes.data);
+      images.push(fs.createReadStream(path));
     }
+
+    api.sendMessage({
+      body: `🖼️ 20 Stylish Boys DP Images`,
+      attachment: images
+    }, threadID, () => {
+      for (let i = 0; i < 20; i++) {
+        fs.unlinkSync(__dirname + `/cache/dpz${i}.jpg`);
+      }
+    }, messageID);
+
+  } catch (error) {
+    console.error(error);
+    api.sendMessage("Error aagaya 😢 baad mein try karo!", threadID, messageID);
   }
 };

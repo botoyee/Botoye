@@ -11,7 +11,7 @@ module.exports.config = {
   cooldowns: 2
 };
 
-const API_URL = "https://gemini-6nkm.onrender.comchat";
+const API_URL = "https://gemini-6nkm.onrender.com/chat";
 const chatHistories = {};
 
 module.exports.handleEvent = async function ({ api, event }) {

@@ -1,114 +1,62 @@
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
-const https = require("https");
+const axios = require("axios"); const fs = require("fs-extra"); const path = require("path");
 
-const downloadDir = path.join(__dirname, "cache");
-if (!fs.existsSync(downloadDir)) fs.mkdirSync(downloadDir);
+let searchCache = {};
 
-let ytSearchCache = {}; // Thread-wise result cache
+module.exports.config = { name: "music", version: "1.0.0", hasPermssion: 0, credits: "Modified by ChatGPT | API by PrinceTech", description: "Search and download music from YouTube", commandCategory: "media", usages: ".music [song name]", cooldowns: 5, };
 
-module.exports = {
-  config: {
-    name: "music",
-    version: "1.0.0",
-    hasPermssion: 0,
-    credits: "mirrykal + ChatGPT + PrinceTech",
-    description: "YouTube MP3 search + download using PrinceTech API",
-    commandCategory: "media",
-    usages: "[song name]",
-    cooldowns: 5
-  },
+module.exports.run = async function ({ api, event, args }) { const query = args.join(" "); if (!query) return api.sendMessage("❌ Please provide a song name. Example: .music tum hi ho", event.threadID, event.messageID);
 
-  run: async function ({ api, event, args }) {
-    if (args.length === 0) {
-      return api.sendMessage("🎶 Gaane ka naam to likho!", event.threadID);
-    }
+try { const res = await axios.get(https://api.princetechn.com/api/search/yts?apikey=prince&query=${encodeURIComponent(query)}); if (!res.data || !res.data.result || res.data.result.length === 0) return api.sendMessage("😢 No results found.", event.threadID, event.messageID);
 
-    const query = encodeURIComponent(args.join(" "));
-    const searchUrl = `https://api.princetechn.com/api/search/yts?apikey=prince&query=${query}`;
+const list = res.data.result.slice(0, 6); // top 6 results
+let msg = "🎵 Search results:\n";
+list.forEach((vid, i) => {
+  msg += `${i + 1}. ${vid.title} (${vid.duration})\n`;
+});
+msg += "\n💬 Reply with the number of the song to download.";
 
-    try {
-      const res = await axios.get(searchUrl);
-      const results = res.data?.result?.slice(0, 7);
+searchCache[event.senderID] = list;
+return api.sendMessage(msg, event.threadID, (err, info) => {
+  global.client.handleReply.push({
+    name: module.exports.config.name,
+    messageID: info.messageID,
+    author: event.senderID,
+    type: "music_select"
+  });
+});
 
-      if (!results || results.length === 0) {
-        return api.sendMessage("❌ Koi gaana nahi mila!", event.threadID);
-      }
+} catch (e) { console.error(e); return api.sendMessage("❌ Error fetching music. Try again later.", event.threadID, event.messageID); } };
 
-      ytSearchCache[event.threadID] = results;
+module.exports.handleReply = async function ({ api, event, handleReply }) { if (handleReply.author !== event.senderID) return; const choice = parseInt(event.body); if (isNaN(choice) || choice < 1 || choice > searchCache[event.senderID].length) return api.sendMessage("❌ Invalid selection.", event.threadID, event.messageID);
 
-      let msg = "🎵 YouTube Search Results:\n\n";
-      results.forEach((track, i) => {
-        msg += `${i + 1}. ${track.title} (${track.duration})\n`;
-      });
-      msg += "\n🔢 Reply with number (1-7) to download the song.";
+const video = searchCache[event.senderID][choice - 1]; const videoUrl = video.url;
 
-      api.sendMessage(msg, event.threadID);
-    } catch (err) {
-      console.error("Search Error:", err.message);
-      api.sendMessage("❌ Search failed, try again later.", event.threadID);
-    }
-  },
+try { const res = await axios.get(https://api.princetechn.com/api/download/yta?apikey=prince&url=${encodeURIComponent(videoUrl)}); const song = res.data.result; if (!song.download_url) return api.sendMessage("❌ Failed to get download link.", event.threadID);
 
-  handleEvent: async function ({ api, event }) {
-    const msg = event.body.trim();
-    if (!/^[1-7]$/.test(msg)) return;
+const filePath = path.join(__dirname, `cache/${event.senderID}_music.mp3`);
+const thumbPath = path.join(__dirname, `cache/${event.senderID}_thumb.jpg`);
 
-    const choice = parseInt(msg);
-    const selectedTrack = ytSearchCache[event.threadID]?.[choice - 1];
-    if (!selectedTrack) return;
+// Download audio
+const audio = await axios.get(song.download_url, { responseType: "arraybuffer" });
+await fs.writeFile(filePath, audio.data);
 
-    delete ytSearchCache[event.threadID]; // Clear after one-time use
+// Download thumbnail
+const thumb = await axios.get(song.thumbnail, { responseType: "arraybuffer" });
+await fs.writeFile(thumbPath, thumb.data);
 
-    const downloadApi = `https://api.princetechn.com/api/download/ytmp3?apikey=prince&url=${encodeURIComponent(selectedTrack.url)}`;
+await api.sendMessage({
+  body: `🎧 ${song.title}\n⏱ Duration: ${song.duration}`,
+  attachment: fs.createReadStream(thumbPath)
+}, event.threadID, async () => {
+  await api.sendMessage({
+    body: `🎶 Here's your song:`,
+    attachment: fs.createReadStream(filePath)
+  }, event.threadID);
 
-    api.sendMessage(`⏬ Downloading "${selectedTrack.title}"...`, event.threadID);
+  // Cleanup
+  fs.unlinkSync(filePath);
+  fs.unlinkSync(thumbPath);
+});
 
-    try {
-      const res = await axios.get(downloadApi);
-      const data = res.data?.result;
+} catch (e) { console.error(e); api.sendMessage("❌ Error downloading music.", event.threadID); } };
 
-      if (!data || !data.download_url) {
-        return api.sendMessage("❌ Failed to fetch download link.", event.threadID);
-      }
-
-      // Message with title, duration, thumbnail
-      const infoMsg = {
-        body: `🎧 Title: ${data.title}\n⏱ Duration: ${data.duration}`,
-        attachment: await global.utils.getStreamFromURL(data.thumbnail)
-      };
-      api.sendMessage(infoMsg, event.threadID);
-
-      // Prepare file
-      const safeName = data.title.replace(/[^a-zA-Z0-9]/g, "_");
-      const filePath = path.join(downloadDir, `${safeName}.mp3`);
-
-      const file = fs.createWriteStream(filePath);
-      await new Promise((resolve, reject) => {
-        https.get(data.download_url, (res) => {
-          res.pipe(file);
-          file.on("finish", () => file.close(resolve));
-        }).on("error", (err) => {
-          fs.unlinkSync(filePath);
-          reject(err);
-        });
-      });
-
-      // Send MP3 file
-      await api.sendMessage({
-        body: `✅ Here's your song: ${data.title}`,
-        attachment: fs.createReadStream(filePath)
-      }, event.threadID);
-
-      // Delete after 10 sec
-      setTimeout(() => {
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      }, 10000);
-
-    } catch (e) {
-      console.error("Download error:", e.message);
-      api.sendMessage("❌ Song download failed.", event.threadID);
-    }
-  }
-};

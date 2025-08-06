@@ -2,71 +2,74 @@ const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 
-// Cache with expiration (1 hour)
-const searchCache = new Map();
-const CACHE_EXPIRATION = 60 * 60 * 1000; 
-
 module.exports.config = {
   name: "music",
-  version: "2.1.0",
+  version: "3.0.0",
   hasPermssion: 0,
   credits: "Your Name",
-  description: "Search and download high quality music",
+  description: "Fixed Music Search & Download",
   commandCategory: "media",
-  usages: ".music [song name]",
-  cooldowns: 5,
+  usages: ".music [song]",
+  cooldowns: 5
 };
 
-module.exports.run = async function ({ api, event, args }) {
+// Debugging function
+async function testApi(query) {
+  const testUrl = `https://api.princetechn.com/api/search/yts?apikey=prince&query=${encodeURIComponent(query)}`;
+  try {
+    console.log("Testing API with URL:", testUrl);
+    const response = await axios.get(testUrl, { timeout: 10000 });
+    console.log("API Response:", response.data);
+    return response.data;
+  } catch (e) {
+    console.error("API Test Failed:", e.message);
+    return null;
+  }
+}
+
+module.exports.run = async function({ api, event, args }) {
   try {
     const query = args.join(" ");
-    if (!query) {
+    if (!query) return api.sendMessage("🎵 Please enter a song name", event.threadID);
+
+    // Debug: Test API before proceeding
+    const apiTest = await testApi(query);
+    if (!apiTest?.result) {
       return api.sendMessage(
-        "🎵 Please enter a song name!\nExample: .music Shape of You",
-        event.threadID,
-        event.messageID
+        `🔴 API Error but works manually?\n\nTry:\n1. Wait 5 mins\n2. Use VPN\n3. Contact admin\n\nDebug: ${apiTest ? "Empty results" : "API failed"}`,
+        event.threadID
       );
     }
 
-    api.setMessageReaction("🔍", event.messageID, () => {}, true);
-
-    // Try multiple search APIs if first fails
-    const APIs = [
+    const res = await axios.get(
       `https://api.princetechn.com/api/search/yts?apikey=prince&query=${encodeURIComponent(query)}`,
-      `https://api.somebackup.com/search?q=${encodeURIComponent(query)}`
-    ];
-
-    let res;
-    for (const apiUrl of APIs) {
-      try {
-        res = await axios.get(apiUrl, { timeout: 10000 });
-        if (res.data?.result?.length) break;
-      } catch (e) {
-        console.log(`Trying next API...`);
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
+          "Accept": "application/json"
+        },
+        timeout: 15000
       }
-    }
+    );
 
-    if (!res?.data?.result?.length) {
+    console.log("Full API Response:", res.data); // Debug log
+
+    if (!res.data?.result?.length) {
       return api.sendMessage(
-        `🔎 No results found for "${query}"\n\nTry:\n• Different keywords\n• English song titles\n• Checking spelling`,
-        event.threadID,
-        event.messageID
+        `❌ No results for "${query}"\n\nPossible fixes:\n• Remove special characters\n• Try shorter query\n• Example: .music love story`,
+        event.threadID
       );
     }
 
     const list = res.data.result.slice(0, 6);
-    let msg = "🎧 Search Results:\n\n";
+    let msg = "🎧 Results:\n\n";
     list.forEach((item, i) => {
-      msg += `${i+1}. ${item.title} (${item.duration || 'N/A'})\n`;
+      msg += `${i+1}. ${item.title} (${item.duration})\n`;
     });
-    msg += "\nReply with the song number (1-6) to download";
+    msg += "\nReply 1-6 to download";
 
-    // Cache with timestamp
-    searchCache.set(event.senderID, {
-      results: list,
-      timestamp: Date.now()
-    });
-
+    global.musicCache = { ...global.musicCache, [event.senderID]: list };
+    
     return api.sendMessage(msg, event.threadID, (err, info) => {
       if (err) return console.error(err);
       global.client.handleReply.push({
@@ -77,104 +80,75 @@ module.exports.run = async function ({ api, event, args }) {
       });
     });
 
-  } catch (error) {
-    console.error("Search Error:", error);
-    api.sendMessage(
-      "⚠️ Music service unavailable. Try again later",
-      event.threadID,
-      event.messageID
+  } catch (err) {
+    console.error("Full Error:", err);
+    return api.sendMessage(
+      `⚠️ Critical Error:\n\n• API Status: ${err.response?.status || "Unknown"}\n• Message: ${err.message}\n\nTry again later or contact support`,
+      event.threadID
     );
   }
 };
 
-module.exports.handleReply = async function ({ api, event, handleReply }) {
+module.exports.handleReply = async function({ api, event, handleReply }) {
   try {
     if (handleReply.author !== event.senderID) return;
-
+    
     const choice = parseInt(event.body);
     if (isNaN(choice) || choice < 1 || choice > 6) {
-      return api.sendMessage(
-        "❌ Please reply with a number between 1-6",
-        event.threadID,
-        event.messageID
-      );
+      return api.sendMessage("❌ Invalid choice. Reply with 1-6", event.threadID);
     }
 
-    const cacheData = searchCache.get(event.senderID);
-    if (!cacheData || Date.now() - cacheData.timestamp > CACHE_EXPIRATION) {
-      return api.sendMessage(
-        "⌛ Search expired. Please search again",
-        event.threadID,
-        event.messageID
-      );
-    }
+    const cache = global.musicCache?.[event.senderID];
+    if (!cache) return api.sendMessage("⌛ Session expired. Search again", event.threadID);
 
-    const video = cacheData.results[choice-1];
-    api.setMessageReaction("⏳", event.messageID, () => {}, true);
+    const video = cache[choice-1];
+    console.log("Selected Video:", video); // Debug log
 
-    // Try multiple download APIs
-    const downloadAPIs = [
+    const downloadRes = await axios.get(
       `https://api.princetechn.com/api/download/yta?apikey=prince&url=${encodeURIComponent(video.url)}`,
-      `https://api.backup.com/download?url=${encodeURIComponent(video.url)}`
-    ];
+      { timeout: 20000 }
+    );
 
-    let songData;
-    for (const apiUrl of downloadAPIs) {
-      try {
-        const res = await axios.get(apiUrl, { timeout: 15000 });
-        if (res.data?.result) {
-          songData = res.data.result;
-          break;
-        }
-      } catch (e) {
-        console.log(`Trying next download API...`);
-      }
+    console.log("Download API Response:", downloadRes.data); // Debug log
+
+    if (!downloadRes.data?.result?.download_url) {
+      return api.sendMessage("❌ Download failed. Video may be restricted", event.threadID);
     }
 
-    if (!songData?.download_url) {
-      return api.sendMessage(
-        "❌ Couldn't download this song. Try another one",
-        event.threadID,
-        event.messageID
-      );
-    }
-
+    const song = downloadRes.data.result;
     const time = Date.now();
+    const paths = {
+      audio: path.join(__dirname, `cache/music_${time}.mp3`),
+      thumb: path.join(__dirname, `cache/thumb_${time}.jpg`)
+    };
+
     const [audio, thumb] = await Promise.all([
-      axios.get(songData.download_url, { responseType: "arraybuffer", timeout: 30000 }),
-      axios.get(songData.thumbnail || 'https://i.imgur.com/8QZQZQZ.png', { responseType: "arraybuffer" })
+      axios.get(song.download_url, { responseType: "arraybuffer", timeout: 30000 }),
+      axios.get(song.thumbnail, { responseType: "arraybuffer" })
     ]);
 
-    const filePath = path.join(__dirname, `cache/music_${time}.mp3`);
-    const thumbPath = path.join(__dirname, `cache/thumb_${time}.jpg`);
-
     await Promise.all([
-      fs.writeFile(filePath, audio.data),
-      fs.writeFile(thumbPath, thumb.data)
+      fs.writeFile(paths.audio, audio.data),
+      fs.writeFile(paths.thumb, thumb.data)
     ]);
 
     await api.sendMessage({
-      body: `🎶 ${songData.title || 'Unknown Track'}\n⏱ ${songData.duration || 'N/A'}`,
-      attachment: fs.createReadStream(thumbPath)
+      body: `🎶 ${song.title}\n⏱ ${song.duration}`,
+      attachment: fs.createReadStream(paths.thumb)
     }, event.threadID);
 
     await api.sendMessage({
-      attachment: fs.createReadStream(filePath)
+      attachment: fs.createReadStream(paths.audio)
     }, event.threadID);
 
     // Cleanup
-    [filePath, thumbPath].forEach(file => {
-      fs.unlink(file, () => {});
-    });
+    Object.values(paths).forEach(p => fs.unlink(p, () => {}));
 
-    api.setMessageReaction("✅", event.messageID, () => {}, true);
-
-  } catch (error) {
-    console.error("Download Error:", error);
+  } catch (err) {
+    console.error("Download Error:", err);
     api.sendMessage(
-      "⚠️ Error downloading song. Please try another",
-      event.threadID,
-      event.messageID
+      `⚠️ Download failed:\n\n${err.message}\n\nTry another song`,
+      event.threadID
     );
   }
 };

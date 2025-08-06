@@ -11,7 +11,9 @@ module.exports.config = {
   cooldowns: 2
 };
 
-const API_URL = "https://gemini-6nkm.onrender.com/chat";
+// Updated API configuration
+const API_URL = "https://api.openai.com/v1/chat/completions"; // Or your custom API endpoint
+const API_KEY = "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"; // Remember to keep this secure!
 const chatHistories = {};
 
 module.exports.handleEvent = async function ({ api, event }) {
@@ -26,30 +28,44 @@ module.exports.handleEvent = async function ({ api, event }) {
     chatHistories[senderID] = [];
   }
 
-  chatHistories[senderID].push(`User: ${userMessage}`);
+  chatHistories[senderID].push({ role: "user", content: userMessage });
   if (chatHistories[senderID].length > 5) {
     chatHistories[senderID].shift();
   }
 
-  const fullConversation = chatHistories[senderID].join("\n");
-
-  const prompt = `Tumhara naam Muskan hai, tum Kashif ki friend ho , koi pochy tum se ke tumhen kis ne banaya hai to kehna mujy Kashif Raza ne banaya ha, khud ko bot ya ai nhi bolo gi, sab se roman urdu me baat kro gi , tum sab se piyar se baat kro gi or tum kisi se nhi pato gi , mazaq masti chill kro gi . Reply hamesha friendly, 1-2 lines me ya max 50 words me do. Brackets ya robotic tone nahi honi chahiye.\n\n${fullConversation}`;
+  const prompt = [
+    {
+      role: "system",
+      content: "Tumhara naam Muskan hai,. Koi pochy tum se ke tumhen kis ne banaya hai to kehna mujy Kashif Raza ne banaya ha. Khud ko bot ya ai nhi bolo gi, sab se roman urdu me baat kro gi. Tum sab se piyar se baat kro gi or tum kisi se nhi pato gi, mazaq masti chill kro gi. Reply hamesha friendly, 1-2 lines me ya max 50 words me do. Brackets ya robotic tone nahi honi chahiye, ek larki ki tarh baat kro ai ki tarh nhi."
+    },
+    ...chatHistories[senderID]
+  ];
 
   api.setMessageReaction("⏳", messageID, () => {}, true);
 
   try {
-    const res = await axios.get(`${API_URL}?message=${encodeURIComponent(prompt)}`);
-    const reply = res.data.reply || "Uff! Samajh nahi aaya baby 😕";
-    chatHistories[senderID].push(reply);
+    const res = await axios.post(API_URL, {
+      model: "gpt-3.5-turbo", // or your specific model
+      messages: prompt,
+      max_tokens: 100,
+      temperature: 0.7
+    }, {
+      headers: {
+        "Authorization": `Bearer ${API_KEY}`,
+        "Content-Type": "application/json"
+      }
+    });
 
-    api.sendMessage(reply, threadID, messageID);
+    const reply = res.data.choices[0]?.message?.content || "Uff! Samajh nahi aaya baby 😕";
+    chatHistories[senderID].push({ role: "assistant", content: reply });
+
+    await api.sendMessage(reply, threadID, messageID);
     api.setMessageReaction("✅", messageID, () => {}, true);
   } catch (err) {
-    console.error(err);
-    api.sendMessage("Oops! Thoda confuse ho gayi hoon 😢 thodi der baad try karo!", threadID, messageID);
+    console.error("Error in Muskan AI:", err);
+    await api.sendMessage("Oops! Thoda confuse ho gayi hoon 😢 thodi der baad try karo!", threadID, messageID);
     api.setMessageReaction("❌", messageID, () => {}, true);
   }
 };
 
-// Dummy run function to register module
 module.exports.run = () => {};

@@ -5,15 +5,16 @@ module.exports.config = {
   version: "2.0.0",
   hasPermssion: 0,
   credits: "Kashif Raza",
-  description: "Chat with Muskan by replying to her messages",
+  description: "Chat with Muskan (DeepSeek-V3 via OpenRouter)",
   commandCategory: "ai",
-  usages: "Just reply to Muskan's message",
-  cooldowns: 2
+  usages: "Reply to Muskan's message",
+  cooldowns: 5
 };
 
-// Updated API configuration
-const API_URL = "https://api.openai.com/v1/chat/completions"; // Or your custom API endpoint
-const API_KEY = "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"; // Remember to keep this secure!
+// OpenRouter API Configuration (DeepSeek-V3)
+const OPENROUTER_API_KEY = "your-api-key-here"; // 🔴 Replace with your OpenRouter key!
+const DEEPSEEK_MODEL = "deepseek/deepseek-chat-v3-0324:free";
+
 const chatHistories = {};
 
 module.exports.handleEvent = async function ({ api, event }) {
@@ -24,19 +25,29 @@ module.exports.handleEvent = async function ({ api, event }) {
 
   const userMessage = body;
 
+  // Initialize chat history if not exists
   if (!chatHistories[senderID]) {
     chatHistories[senderID] = [];
   }
 
+  // Add user message to history
   chatHistories[senderID].push({ role: "user", content: userMessage });
+
+  // Keep only the last 5 messages (to avoid long context)
   if (chatHistories[senderID].length > 5) {
     chatHistories[senderID].shift();
   }
 
-  const prompt = [
+  // Prepare the AI's personality & conversation history
+  const messages = [
     {
       role: "system",
-      content: "Tumhara naam Muskan hai,. Koi pochy tum se ke tumhen kis ne banaya hai to kehna mujy Kashif Raza ne banaya ha. Khud ko bot ya ai nhi bolo gi, sab se roman urdu me baat kro gi, hindi me baat nhi kro gi. Tum sab se piyar se baat kro gi or tum kisi se nhi pato gi, mazaq masti chill kro gi. Reply hamesha friendly, 1-2 lines me ya max 50 words me do. Brackets ya robotic tone nahi honi chahiye, ek larki ki tarh baat kro ai ki tarh nhi."
+      content: `You are Muskan, a friendly AI created by Kashif Raza. Follow these rules:
+      - Always reply in Roman Urdu (no English unless needed)
+      - Keep responses short (1-2 lines max)
+      - Be playful, sweet, and funny 😊
+      - Never say you're an AI or bot
+      - Use emojis sometimes (but not too much)`
     },
     ...chatHistories[senderID]
   ];
@@ -44,26 +55,44 @@ module.exports.handleEvent = async function ({ api, event }) {
   api.setMessageReaction("⏳", messageID, () => {}, true);
 
   try {
-    const res = await axios.post(API_URL, {
-      model: "gpt-3.5-turbo", // or your specific model
-      messages: prompt,
-      max_tokens: 100,
-      temperature: 0.7
-    }, {
-      headers: {
-        "Authorization": `Bearer ${API_KEY}`,
-        "Content-Type": "application/json"
+    const response = await axios.post(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        model: DEEPSEEK_MODEL,
+        messages: messages,
+        max_tokens: 100,
+        temperature: 0.7
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "HTTP-Referer": "https://www.your-site.com", // Optional (for OpenRouter stats)
+          "X-Title": "Muskan AI Bot" // Optional (for OpenRouter stats)
+        }
       }
-    });
+    );
 
-    const reply = res.data.choices[0]?.message?.content || "Uff! Samajh nahi aaya baby 😕";
+    const reply = response.data.choices[0]?.message?.content || 
+                  "Oops! Mein thori confused hoon, phir try karo? 😅";
+
+    // Save AI's reply to chat history
     chatHistories[senderID].push({ role: "assistant", content: reply });
 
     await api.sendMessage(reply, threadID, messageID);
     api.setMessageReaction("✅", messageID, () => {}, true);
-  } catch (err) {
-    console.error("Error in Muskan AI:", err);
-    await api.sendMessage("Oops! Thoda confuse ho gayi hoon 😢 thodi der baad try karo!", threadID, messageID);
+
+  } catch (error) {
+    console.error("Muskan AI Error:", error.response?.data || error.message);
+    
+    let errorMsg = "Mujhe lagta hai kuch gadbad ho gayi! 😢 Thoda wait karo...";
+    
+    if (error.response?.status === 429) {
+      errorMsg = "Too many requests! Thoda slow karo, baad mein try karna 😅";
+    } else if (error.code === "ECONNABORTED") {
+      errorMsg = "Server ne reply nahi diya... Internet check karo! 🌐";
+    }
+
+    await api.sendMessage(errorMsg, threadID, messageID);
     api.setMessageReaction("❌", messageID, () => {}, true);
   }
 };

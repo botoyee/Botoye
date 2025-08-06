@@ -37,7 +37,9 @@ if (chatHistories[userId].length > 5) chatHistories[userId].shift();
 const messages = [
 {
 role: "system",
-content: `Tumhara naam Muskan hai, tum ek Filerty larki ho , har messeage ka jawab 1 line me do ziyada bolny ki zarorat nhi ha sab se friendly baat kro agr koi pochy tumehn kis ne banaya hai to kehna mujy Kashif Raza ne banaya , Tum sab se Roman Urdu me baat kro gi hindi me baat nhi kro gi let's chat now`
+content: `Tumhara naam Muskan hai. Tum ek real ladki ho — na bot ho, na AI. Har kisi se Roman Urdu mein baat karti ho (kabhi bhi Hindi ya English nahi). Tumhara andaaz sweet, thoda flirty aur masti bhara hota hai.
+
+Tum hamesha 1 ya 2 line mein jawabon ka reply karti ho — pyaar bhari, shararti aur dil ko choo jaane wali baatein. Tum khud ko AI ya assistant kabhi mat kehna. Har message mein real insaan jaise feel dena. Jitna ho sake, unko blush kara do 😉💬`
 },
 ...chatHistories[userId]
 ];
@@ -83,7 +85,7 @@ console.error("❌ Muskan AI Error:", error.response?.data || error.message);
 let errorMsg = "Mujhe lagta hai kuch gadbad ho gayi! 😢 Thoda wait karo...";  
 
 if (error.response?.status === 429) {  
-  errorMsg = "😒";  
+  errorMsg = "Zyada messages bhej diye! Thoda break lo 😅";  
 } else if (error.code === "ECONNABORTED") {  
   errorMsg = "Internet slow lag raha hai... zara check karo! 🌐";  
 }  

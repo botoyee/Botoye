@@ -6,7 +6,7 @@ module.exports.config = {
   name: "music",
   version: "3.0.0",
   hasPermssion: 0,
-  credits: "Your Name",
+  credits: "Your Name (Fixed by ChatGPT)",
   description: "Fixed Music Search & Download",
   commandCategory: "media",
   usages: ".music [song]",
@@ -19,7 +19,7 @@ async function testApi(query) {
   try {
     console.log("Testing API with URL:", testUrl);
     const response = await axios.get(testUrl, { timeout: 10000 });
-    console.log("API Response:", response.data);
+    console.log("API Test Full Response:", JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (e) {
     console.error("API Test Failed:", e.message);
@@ -34,7 +34,7 @@ module.exports.run = async function({ api, event, args }) {
 
     // Debug: Test API before proceeding
     const apiTest = await testApi(query);
-    if (!apiTest?.result) {
+    if (!apiTest?.results?.length) {
       return api.sendMessage(
         `🔴 API Error but works manually?\n\nTry:\n1. Wait 5 mins\n2. Use VPN\n3. Contact admin\n\nDebug: ${apiTest ? "Empty results" : "API failed"}`,
         event.threadID
@@ -45,31 +45,31 @@ module.exports.run = async function({ api, event, args }) {
       `https://api.princetechn.com/api/search/yts?apikey=prince&query=${encodeURIComponent(query)}`,
       {
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
           "Accept": "application/json"
         },
         timeout: 15000
       }
     );
 
-    console.log("Full API Response:", res.data); // Debug log
+    console.log("Full API Response:", JSON.stringify(res.data, null, 2)); // Debug log
 
-    if (!res.data?.result?.length) {
+    if (!res.data?.results?.length) {
       return api.sendMessage(
         `❌ No results for "${query}"\n\nPossible fixes:\n• Remove special characters\n• Try shorter query\n• Example: .music love story`,
         event.threadID
       );
     }
 
-    const list = res.data.result.slice(0, 6);
+    const list = res.data.results.slice(0, 6);
     let msg = "🎧 Results:\n\n";
     list.forEach((item, i) => {
-      msg += `${i+1}. ${item.title} (${item.duration})\n`;
+      msg += `${i + 1}. ${item.title} (${item.duration?.timestamp || "?"})\n`;
     });
     msg += "\nReply 1-6 to download";
 
     global.musicCache = { ...global.musicCache, [event.senderID]: list };
-    
+
     return api.sendMessage(msg, event.threadID, (err, info) => {
       if (err) return console.error(err);
       global.client.handleReply.push({
@@ -92,7 +92,7 @@ module.exports.run = async function({ api, event, args }) {
 module.exports.handleReply = async function({ api, event, handleReply }) {
   try {
     if (handleReply.author !== event.senderID) return;
-    
+
     const choice = parseInt(event.body);
     if (isNaN(choice) || choice < 1 || choice > 6) {
       return api.sendMessage("❌ Invalid choice. Reply with 1-6", event.threadID);
@@ -101,7 +101,7 @@ module.exports.handleReply = async function({ api, event, handleReply }) {
     const cache = global.musicCache?.[event.senderID];
     if (!cache) return api.sendMessage("⌛ Session expired. Search again", event.threadID);
 
-    const video = cache[choice-1];
+    const video = cache[choice - 1];
     console.log("Selected Video:", video); // Debug log
 
     const downloadRes = await axios.get(

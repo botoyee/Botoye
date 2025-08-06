@@ -17,7 +17,6 @@ async function testApi(query) {
   const testUrl = `https://api.princetechn.com/api/search/yts?apikey=prince&query=${encodeURIComponent(query)}`;
   try {
     const response = await axios.get(testUrl, { timeout: 10000 });
-    console.log("API Test Full Response:", JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (e) {
     console.error("API Test Failed:", e.message);
@@ -30,7 +29,6 @@ module.exports.run = async function({ api, event, args }) {
     const query = args.join(" ");
     if (!query) return api.sendMessage("🎵 Please enter a song name", event.threadID);
 
-    // React and notify
     api.setMessageReaction("🔍", event.messageID, () => {}, true);
     api.sendMessage(`🔎 Searching music for: "${query}"`, event.threadID);
 
@@ -66,7 +64,6 @@ module.exports.run = async function({ api, event, args }) {
 
     global.musicCache = { ...global.musicCache, [event.senderID]: list };
 
-    // ✅ Add final reaction
     api.setMessageReaction("✅", event.messageID, () => {}, true);
 
     return api.sendMessage(msg, event.threadID, (err, info) => {
@@ -127,14 +124,14 @@ module.exports.handleReply = async function({ api, event, handleReply }) {
       fs.writeFile(paths.thumb, thumb.data)
     ]);
 
-    // Send thumbnail first (clean)
+    // ✅ FIXED: Send thumbnail with title in caption
     await api.sendMessage({
+      body: `🎶 ${song.title}\n⏱ ${song.duration}`,
       attachment: fs.createReadStream(paths.thumb)
     }, event.threadID);
 
-    // Then send title + audio
+    // ✅ Then send the music
     await api.sendMessage({
-      body: `🎶 ${song.title}\n⏱ ${song.duration}`,
       attachment: fs.createReadStream(paths.audio)
     }, event.threadID);
 

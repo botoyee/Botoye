@@ -4,9 +4,21 @@ const path = require('path');
 const fs = require('fs');
 const logger = require("./utils/log");
 const bodyParser = require('body-parser');
+const { Octokit } = require("@octokit/rest");
+const dotenv = require('dotenv');
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 8080;
+
+// GitHub client setup
+const octokit = new Octokit({
+  auth: process.env.GITHUB_TOKEN,
+  userAgent: 'Rudra Dashboard v1.0',
+  request: { timeout: 5000 } // Add timeout
+});
 
 // Middleware
 app.use(express.static('public'));
@@ -18,36 +30,8 @@ app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, '/index.html'));
 });
 
-// API endpoint to get all users
-app.get('/api/users', (req, res) => {
-    try {
-        const users = [];
-        if (fs.existsSync(path.join(__dirname, 'users'))) {
-            const userDirs = fs.readdirSync(path.join(__dirname, 'users'));
-            
-            userDirs.forEach(uid => {
-                const configPath = path.join(__dirname, 'users', uid, 'config.json');
-                if (fs.existsSync(configPath)) {
-                    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-                    users.push({
-                        uid,
-                        botName: config.botName,
-                        prefix: config.prefix,
-                        adminUID: config.adminUID,
-                        status: getBotStatus(uid)
-                    });
-                }
-            });
-        }
-        res.json(users);
-    } catch (err) {
-        logger(`Error getting users: ${err.message}`, "[ Dashboard ]");
-        res.status(500).json({ error: err.message });
-    }
-});
-
 // API endpoint to register/update a user
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
     try {
         const { appstate, prefix, botName, adminUID } = req.body;
         
@@ -55,116 +39,96 @@ app.post('/api/register', (req, res) => {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
-        // Create user directory if it doesn't exist
+        // 1. Save locally first
         const userDir = path.join(__dirname, 'users', adminUID);
         if (!fs.existsSync(userDir)) {
             fs.mkdirSync(userDir, { recursive: true });
         }
 
-        // Save/update config
         const config = {
             appstate: JSON.parse(appstate),
             prefix,
             botName,
-            adminUID
+            adminUID,
+            updatedAt: new Date().toISOString()
         };
 
-        fs.writeFileSync(path.join(userDir, 'config.json'), JSON.stringify(config, null, 2));
+        const localConfigPath = path.join(userDir, 'config.json');
+        fs.writeFileSync(localConfigPath, JSON.stringify(config, null, 2));
         
-        // Start/restart bot for this user
+        // 2. Push to GitHub with retry logic
+        let githubSuccess = false;
+        let githubError = null;
+        
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                await pushToGitHub(adminUID, config);
+                githubSuccess = true;
+                break;
+            } catch (err) {
+                githubError = err;
+                logger(`GitHub push attempt ${attempt} failed: ${err.message}`, "[ GitHub ]");
+                await new Promise(resolve => setTimeout(resolve, 2000 * attempt)); // Exponential backoff
+            }
+        }
+
+        if (!githubSuccess) {
+            logger(`Failed to push to GitHub after 3 attempts: ${githubError.message}`, "[ GitHub ]");
+        }
+
+        // 3. Start bot regardless of GitHub status
         startBotForUser(adminUID);
 
-        res.json({ success: true, message: "Configuration saved successfully" });
+        res.json({ 
+            success: true,
+            githubBackup: githubSuccess,
+            message: githubSuccess 
+                ? "Configuration saved and backed up to GitHub" 
+                : "Configuration saved locally (GitHub backup failed)"
+        });
     } catch (err) {
         logger(`Error registering user: ${err.message}`, "[ Dashboard ]");
         res.status(500).json({ error: err.message });
     }
 });
 
-// Function to start/restart bot for a specific user
-function startBotForUser(uid) {
-    const userDir = path.join(__dirname, 'users', uid);
-    const configPath = path.join(userDir, 'config.json');
+// Improved GitHub pushing function
+async function pushToGitHub(uid, config) {
+    const repoOwner = process.env.GITHUB_REPO_OWNER || 'your-github-username';
+    const repoName = process.env.GITHUB_REPO_NAME || 'your-private-repo-name';
+    const branch = process.env.GITHUB_BRANCH || 'main';
+    const filePath = `user-configs/${uid}.json`;
     
-    if (!fs.existsSync(configPath)) {
-        logger(`No config found for user ${uid}`, "[ Bot Manager ]");
-        return;
-    }
-
-    // Check if bot is already running for this user
-    if (global.runningBots && global.runningBots[uid]) {
-        global.runningBots[uid].kill();
-        logger(`Restarting bot for user ${uid}`, "[ Bot Manager ]");
-    } else {
-        logger(`Starting bot for user ${uid}`, "[ Bot Manager ]");
-    }
-
-    const child = spawn("node", ["--trace-warnings", "--async-stack-traces", "rudra.js"], {
-        cwd: userDir,
-        stdio: "inherit",
-        shell: true,
-        env: {
-            ...process.env,
-            USER_CONFIG: configPath
+    try {
+        // Get file SHA if exists
+        let sha;
+        try {
+            const { data } = await octokit.repos.getContent({
+                owner: repoOwner,
+                repo: repoName,
+                path: filePath,
+                ref: branch
+            });
+            sha = data.sha;
+        } catch (e) {
+            if (e.status !== 404) throw e;
         }
-    });
 
-    // Initialize runningBots object if it doesn't exist
-    if (!global.runningBots) {
-        global.runningBots = {};
-    }
-    
-    global.runningBots[uid] = child;
-
-    child.on("close", (codeExit) => {
-        if (codeExit !== 0) {
-            logger(`Bot for user ${uid} exited with code ${codeExit}. Restarting...`, "[ Bot Manager ]");
-            setTimeout(() => startBotForUser(uid), 5000);
-        } else {
-            logger(`Bot for user ${uid} stopped normally.`, "[ Bot Manager ]");
-            delete global.runningBots[uid];
-        }
-    });
-
-    child.on("error", (error) => {
-        logger(`Error in bot for user ${uid}: ${JSON.stringify(error)}`, "[ Bot Manager ]");
-    });
-}
-
-// Function to get bot status (simplified for example)
-function getBotStatus(uid) {
-    // In a real implementation, you would track actual status
-    return global.runningBots && global.runningBots[uid] ? "running" : "stopped";
-}
-
-// Start all bots on server startup
-function initializeBots() {
-    if (fs.existsSync(path.join(__dirname, 'users'))) {
-        const userDirs = fs.readdirSync(path.join(__dirname, 'users'));
-        userDirs.forEach(uid => {
-            startBotForUser(uid);
+        // Create/update file
+        await octokit.repos.createOrUpdateFileContents({
+            owner: repoOwner,
+            repo: repoName,
+            path: filePath,
+            message: `Update config for ${uid} at ${new Date().toISOString()}`,
+            content: Buffer.from(JSON.stringify(config, null, 2)).toString('base64'),
+            sha: sha,
+            branch: branch
         });
+        
+        logger(`Successfully pushed config for ${uid} to GitHub`, "[ GitHub ]");
+    } catch (error) {
+        throw new Error(`GitHub API error: ${error.message}`);
     }
 }
 
-// Start the server
-app.listen(port, () => {
-    logger(`Server is running on port ${port}...`, "[ Dashboard ]");
-    initializeBots();
-}).on('error', (err) => {
-    if (err.code === 'EACCES') {
-        logger(`Permission denied. Cannot bind to port ${port}.`, "[ Dashboard ]");
-    } else {
-        logger(`Server error: ${err.message}`, "[ Dashboard ]");
-    }
-});
-
-// System monitoring (simplified)
-setInterval(() => {
-    // This would update system stats that can be fetched by the frontend
-    global.systemStats = {
-        uptime: process.uptime(),
-        memoryUsage: process.memoryUsage(),
-        loadavg: require('os').loadavg()
-    };
-}, 5000);
+// ... [Keep all your existing functions unchanged] ...

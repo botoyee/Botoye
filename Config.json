@@ -1,0 +1,10 @@
+{
+  "botName": "MirryKal Bot",
+  "version": "1.0.0",
+  "owner": "Kashif Raza",
+  "prefix": "!",
+  "statusUpdateInterval": 300000,
+  "multiUser": true,
+  "allowedUsers": ["User1_ID", "User2_ID"],
+  "autoRestartLimit": 5
+}

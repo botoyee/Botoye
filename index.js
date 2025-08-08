@@ -1,31 +1,40 @@
 const { spawn } = require("child_process");
 const axios = require("axios");
+const express = require("express");
+const path = require("path");
+const fs = require("fs");
 const logger = require("./utils/log");
 
 ///////////////////////////////////////////////////////////
 //========= Create website for dashboard/uptime =========//
 ///////////////////////////////////////////////////////////
 
-const express = require('express');
-const path = require('path');
-
 const app = express();
 const port = process.env.PORT || 8080;
 
-// Serve the index.html file
-app.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname, '/index.html'));
+// Serve static files (CSS, JS, images if needed)
+app.use(express.static(path.join(__dirname, "public")));
+
+// Serve index.html
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Start the server and add error handling
+// Status API (multi-user info)
+app.get("/status", (req, res) => {
+    res.json({
+        botStatus: global.botStatus || "unknown",
+        restarts: global.countRestart || 0,
+        uptime: process.uptime(),
+        users: global.activeUsers || [],
+        lastUpdate: new Date().toISOString()
+    });
+});
+
 app.listen(port, () => {
-    logger(`Server is running on port ${port}...`, "[ MirryKal ]");
-}).on('error', (err) => {
-    if (err.code === 'EACCES') {
-        logger(`Permission denied. Cannot bind to port ${port}.`, "[ MirryKal ]");
-    } else {
-        logger(`Server error: ${err.message}`, "[ Rudra ]");
-    }
+    logger(`Server running on port ${port}...`, "[ SERVER ]");
+}).on("error", (err) => {
+    logger(`Server error: ${err.message}`, "[ SERVER ]");
 });
 
 /////////////////////////////////////////////////////////
@@ -33,9 +42,11 @@ app.listen(port, () => {
 /////////////////////////////////////////////////////////
 
 global.countRestart = global.countRestart || 0;
+global.activeUsers = [];
+global.botStatus = "starting";
 
 function startBot(message) {
-    if (message) logger(message, "[ MirryKal ]");
+    if (message) logger(message, "[ BOT ]");
 
     const child = spawn("node", ["--trace-warnings", "--async-stack-traces", "rudra.js"], {
         cwd: __dirname,
@@ -43,18 +54,23 @@ function startBot(message) {
         shell: true
     });
 
+    child.on("spawn", () => {
+        global.botStatus = "running";
+    });
+
     child.on("close", (codeExit) => {
+        global.botStatus = "stopped";
         if (codeExit !== 0 && global.countRestart < 5) {
             global.countRestart++;
-            logger(`Bot exited with code ${codeExit}. Restarting... (${global.countRestart}/5)`, "[ Rudra ]");
+            logger(`Bot exited with code ${codeExit}. Restarting... (${global.countRestart}/5)`, "[ BOT ]");
             startBot();
         } else {
-            logger(`Bot stopped after ${global.countRestart} restarts.`, "[ Rudra ]");
+            logger(`Bot stopped after ${global.countRestart} restarts.`, "[ BOT ]");
         }
     });
 
     child.on("error", (error) => {
-        logger(`An error occurred: ${JSON.stringify(error)}`, "[ Rudra ]");
+        logger(`Bot error: ${error.message}`, "[ BOT ]");
     });
 }
 
@@ -64,12 +80,12 @@ function startBot(message) {
 
 axios.get("https://raw.githubusercontent.com/priyanshu192/bot/main/package.json")
     .then((res) => {
-        logger(res.data.name, "[ Rudra ]");
-        logger(`Version: ${res.data.version}`, "[ Rudra ]");
-        logger(res.data.description, "[ Rudra ]");
+        logger(`Bot: ${res.data.name}`, "[ UPDATE ]");
+        logger(`Version: ${res.data.version}`, "[ UPDATE ]");
+        logger(res.data.description, "[ UPDATE ]");
     })
     .catch((err) => {
-        logger(`Failed to fetch update info: ${err.message}`, "[ Rudra ]");
+        logger(`Update check failed: ${err.message}`, "[ UPDATE ]");
     });
 
 // Start the bot

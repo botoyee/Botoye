@@ -1,8 +1,9 @@
 const { spawn } = require("child_process");
 const axios = require("axios");
-const os = require("os");
-const path = require("path");
+const logger = require("./utils/log");
 const express = require("express");
+const path = require("path");
+const fs = require("fs");
 
 ///////////////////////////////////////////////////////////
 //========= Create website for dashboard/uptime =========//
@@ -11,38 +12,35 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 8080;
 
-// Global Logs Array
-global.botLogs = [];
+// Middleware to parse JSON
+app.use(express.json());
 
-// Custom Logger
-function logger(msg, tag = "[Bot]") {
-    const logMsg = `${tag} ${msg}`;
-    console.log(logMsg);
-    global.botLogs.push(logMsg);
-    if (global.botLogs.length > 50) global.botLogs.shift();
-}
+// Serve static files (panel)
+app.use(express.static(path.join(__dirname, "public")));
 
-// Serve the panel HTML
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "index.html"));
+// Serve main index.html for root
+app.get("/", function (req, res) {
+    res.sendFile(path.join(__dirname, "/index.html"));
 });
 
-// API for status
-app.get("/api/status", (req, res) => {
-    const uptime = process.uptime();
-    const cpuLoad = os.loadavg()[0].toFixed(2);
-    const ramUsage = (process.memoryUsage().rss / 1024 / 1024).toFixed(2) + " MB";
+// Save user config from panel
+app.post("/save-config", (req, res) => {
+    const { username, botname, prefix, adminid, appstate } = req.body;
+    if (!username) return res.status(400).send("Username is required");
 
-    res.json({
-        status: "✅ Running",
-        uptime: `${Math.floor(uptime / 60)}m ${Math.floor(uptime % 60)}s`,
-        cpu: cpuLoad,
-        ram: ramUsage,
-        logs: global.botLogs
-    });
+    const userFolder = path.join(__dirname, "users");
+    if (!fs.existsSync(userFolder)) fs.mkdirSync(userFolder);
+
+    const userFile = path.join(userFolder, `${username}.json`);
+    fs.writeFileSync(
+        userFile,
+        JSON.stringify({ botname, prefix, adminid, appstate }, null, 2)
+    );
+
+    res.send("Saved Successfully");
 });
 
-// Start server
+// Start the server and add error handling
 app.listen(port, () => {
     logger(`Server is running on port ${port}...`, "[ MirryKal ]");
 }).on("error", (err) => {

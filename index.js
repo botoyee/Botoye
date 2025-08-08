@@ -1,9 +1,8 @@
 const { spawn } = require("child_process");
 const axios = require("axios");
-const express = require("express");
+const os = require("os");
 const path = require("path");
-const fs = require("fs");
-const logger = require("./utils/log");
+const express = require("express");
 
 ///////////////////////////////////////////////////////////
 //========= Create website for dashboard/uptime =========//
@@ -12,29 +11,46 @@ const logger = require("./utils/log");
 const app = express();
 const port = process.env.PORT || 8080;
 
-// Serve static files (CSS, JS, images if needed)
-app.use(express.static(path.join(__dirname, "public")));
+// Global Logs Array
+global.botLogs = [];
 
-// Serve index.html
+// Custom Logger
+function logger(msg, tag = "[Bot]") {
+    const logMsg = `${tag} ${msg}`;
+    console.log(logMsg);
+    global.botLogs.push(logMsg);
+    if (global.botLogs.length > 50) global.botLogs.shift();
+}
+
+// Serve the panel HTML
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Status API (multi-user info)
-app.get("/status", (req, res) => {
+// API for status
+app.get("/api/status", (req, res) => {
+    const uptime = process.uptime();
+    const cpuLoad = os.loadavg()[0].toFixed(2);
+    const ramUsage = (process.memoryUsage().rss / 1024 / 1024).toFixed(2) + " MB";
+
     res.json({
-        botStatus: global.botStatus || "unknown",
-        restarts: global.countRestart || 0,
-        uptime: process.uptime(),
-        users: global.activeUsers || [],
-        lastUpdate: new Date().toISOString()
+        status: "✅ Running",
+        uptime: `${Math.floor(uptime / 60)}m ${Math.floor(uptime % 60)}s`,
+        cpu: cpuLoad,
+        ram: ramUsage,
+        logs: global.botLogs
     });
 });
 
+// Start server
 app.listen(port, () => {
-    logger(`Server running on port ${port}...`, "[ SERVER ]");
+    logger(`Server is running on port ${port}...`, "[ MirryKal ]");
 }).on("error", (err) => {
-    logger(`Server error: ${err.message}`, "[ SERVER ]");
+    if (err.code === "EACCES") {
+        logger(`Permission denied. Cannot bind to port ${port}.`, "[ MirryKal ]");
+    } else {
+        logger(`Server error: ${err.message}`, "[ Rudra ]");
+    }
 });
 
 /////////////////////////////////////////////////////////
@@ -42,11 +58,9 @@ app.listen(port, () => {
 /////////////////////////////////////////////////////////
 
 global.countRestart = global.countRestart || 0;
-global.activeUsers = [];
-global.botStatus = "starting";
 
 function startBot(message) {
-    if (message) logger(message, "[ BOT ]");
+    if (message) logger(message, "[ MirryKal ]");
 
     const child = spawn("node", ["--trace-warnings", "--async-stack-traces", "rudra.js"], {
         cwd: __dirname,
@@ -54,23 +68,18 @@ function startBot(message) {
         shell: true
     });
 
-    child.on("spawn", () => {
-        global.botStatus = "running";
-    });
-
     child.on("close", (codeExit) => {
-        global.botStatus = "stopped";
         if (codeExit !== 0 && global.countRestart < 5) {
             global.countRestart++;
-            logger(`Bot exited with code ${codeExit}. Restarting... (${global.countRestart}/5)`, "[ BOT ]");
+            logger(`Bot exited with code ${codeExit}. Restarting... (${global.countRestart}/5)`, "[ Rudra ]");
             startBot();
         } else {
-            logger(`Bot stopped after ${global.countRestart} restarts.`, "[ BOT ]");
+            logger(`Bot stopped after ${global.countRestart} restarts.`, "[ Rudra ]");
         }
     });
 
     child.on("error", (error) => {
-        logger(`Bot error: ${error.message}`, "[ BOT ]");
+        logger(`An error occurred: ${JSON.stringify(error)}`, "[ Rudra ]");
     });
 }
 
@@ -80,12 +89,12 @@ function startBot(message) {
 
 axios.get("https://raw.githubusercontent.com/priyanshu192/bot/main/package.json")
     .then((res) => {
-        logger(`Bot: ${res.data.name}`, "[ UPDATE ]");
-        logger(`Version: ${res.data.version}`, "[ UPDATE ]");
-        logger(res.data.description, "[ UPDATE ]");
+        logger(res.data.name, "[ Rudra ]");
+        logger(`Version: ${res.data.version}`, "[ Rudra ]");
+        logger(res.data.description, "[ Rudra ]");
     })
     .catch((err) => {
-        logger(`Update check failed: ${err.message}`, "[ UPDATE ]");
+        logger(`Failed to fetch update info: ${err.message}`, "[ Rudra ]");
     });
 
 // Start the bot

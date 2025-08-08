@@ -1,69 +1,43 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bot Dashboard</title>
+  <title>Bot Control Panel</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0d1117;
-      color: #c9d1d9;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      color: #58a6ff;
-      text-align: center;
-    }
-    .card {
-      background: #161b22;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
-    .status {
-      font-size: 18px;
-    }
-    .logs {
-      background: #0d1117;
-      border: 1px solid #30363d;
-      padding: 10px;
-      height: 300px;
-      overflow-y: auto;
-      font-family: monospace;
-      font-size: 14px;
-    }
+    body { font-family: Arial, sans-serif; background: #111; color: white; text-align: center; padding: 20px; }
+    h1 { color: #00ff99; }
+    .container { max-width: 400px; margin: auto; background: #222; padding: 20px; border-radius: 10px; }
+    input, button { width: 100%; padding: 10px; margin-top: 10px; border: none; border-radius: 5px; }
+    input { background: #333; color: white; }
+    button { background: #00ff99; color: black; cursor: pointer; }
+    button:hover { background: #00cc7a; }
   </style>
 </head>
 <body>
-  <h1>🤖 MirryKal Bot Dashboard</h1>
-  
-  <div class="card">
-    <div class="status">Status: <span id="status">Loading...</span></div>
-    <div>Uptime: <span id="uptime">Loading...</span></div>
-    <div>CPU Usage: <span id="cpu">Loading...</span></div>
-    <div>RAM Usage: <span id="ram">Loading...</span></div>
-  </div>
-  
-  <div class="card">
-    <h2>📜 Logs</h2>
-    <div class="logs" id="logs">Fetching logs...</div>
+  <h1>Bot Control Panel</h1>
+  <div class="container">
+    <h3>Upload AppState</h3>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <input type="file" name="appstate" accept=".json" required />
+      <input type="text" name="userid" placeholder="Enter User ID" required />
+      <button type="submit">Upload</button>
+    </form>
+    <p id="msg"></p>
   </div>
 
   <script>
-    async function fetchData() {
-      const res = await fetch('/api/status');
-      const data = await res.json();
-      document.getElementById('status').innerText = data.status;
-      document.getElementById('uptime').innerText = data.uptime;
-      document.getElementById('cpu').innerText = data.cpu;
-      document.getElementById('ram').innerText = data.ram;
-
-      document.getElementById('logs').innerText = data.logs.join("\n");
-    }
-    setInterval(fetchData, 3000);
-    fetchData();
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const res = await fetch("/upload", {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.text();
+      document.getElementById("msg").innerText = data;
+    });
   </script>
 </body>
 </html>

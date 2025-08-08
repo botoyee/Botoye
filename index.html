@@ -3,102 +3,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Subscribe to Mirrykal</title>
+  <title>Bot Dashboard</title>
   <style>
     body {
+      font-family: Arial, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
       margin: 0;
-      overflow: hidden;
-      background: black;
-      animation: blink 0.5s infinite alternate;
+      padding: 20px;
     }
-    @keyframes blink {
-      0%   { background-color: #ff0033; }
-      25%  { background-color: #ffcc00; }
-      50%  { background-color: #00ccff; }
-      75%  { background-color: #66ff66; }
-      100% { background-color: #ff66cc; }
-    }
-    iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 60vh;
-      border: none;
-    }
-    .sticker-container {
-      position: absolute;
-      bottom: 5%;
-      left: 50%;
-      transform: translateX(-50%);
+    h1 {
+      color: #58a6ff;
       text-align: center;
     }
-    .sticker-img {
-      height: 150px;
-      animation: bounce 1s infinite;
+    .card {
+      background: #161b22;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
     }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+    .status {
+      font-size: 18px;
     }
-    .subscribe-button, .unmute-button {
-      margin-top: -20px;
-      font-size: 24px;
-      padding: 12px 24px;
-      background: red;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      animation: pulse 1.5s infinite;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-      margin-bottom: 10px;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
+    .logs {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <div id="player"></div>
-  <div class="sticker-container">
-    <img src="https://media.giphy.com/media/12HZukMBlutpoQ/giphy.gif" alt="Animal Sticker" class="sticker-img">
-    <button class="subscribe-button" onclick="alert('Thanks for subscribing! 🎉')">SUBSCRIBE</button>
-    <button class="unmute-button" onclick="unmuteVideo()">🔊 UNMUTE VIDEO</button>
+  <h1>🤖 MirryKal Bot Dashboard</h1>
+  
+  <div class="card">
+    <div class="status">Status: <span id="status">Loading...</span></div>
+    <div>Uptime: <span id="uptime">Loading...</span></div>
+    <div>CPU Usage: <span id="cpu">Loading...</span></div>
+    <div>RAM Usage: <span id="ram">Loading...</span></div>
   </div>
+  
+  <div class="card">
+    <h2>📜 Logs</h2>
+    <div class="logs" id="logs">Fetching logs...</div>
+  </div>
+
   <script>
-    var player;
-    function onYouTubeIframeAPIReady() {
-      player = new YT.Player('player', {
-        height: '100%',
-        width: '100%',
-        videoId: 'aZXKCFPxKjs',
-        playerVars: {
-          autoplay: 1,
-          mute: 1,
-          loop: 1,
-          playlist: 'aZXKCFPxKjs',
-          controls: 0,
-          modestbranding: 1,
-          showinfo: 0
-        },
-        events: {
-          onReady: (e) => e.target.playVideo()
-        }
-      });
+    async function fetchData() {
+      const res = await fetch('/api/status');
+      const data = await res.json();
+      document.getElementById('status').innerText = data.status;
+      document.getElementById('uptime').innerText = data.uptime;
+      document.getElementById('cpu').innerText = data.cpu;
+      document.getElementById('ram').innerText = data.ram;
+
+      document.getElementById('logs').innerText = data.logs.join("\n");
     }
-    function unmuteVideo() {
-      if (player) {
-        player.unMute();
-      }
-    }
-    var tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.body.appendChild(tag);
+    setInterval(fetchData, 3000);
+    fetchData();
   </script>
 </body>
 </html>

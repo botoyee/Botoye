@@ -64,17 +64,12 @@
   </style>
 </head>
 <body>
-  <!-- YouTube iframe -->
   <div id="player"></div>
-
-  <!-- Sticker + Buttons -->
   <div class="sticker-container">
     <img src="https://media.giphy.com/media/12HZukMBlutpoQ/giphy.gif" alt="Animal Sticker" class="sticker-img">
     <button class="subscribe-button" onclick="alert('Thanks for subscribing! 🎉')">SUBSCRIBE</button>
     <button class="unmute-button" onclick="unmuteVideo()">🔊 UNMUTE VIDEO</button>
   </div>
-
-  <!-- YouTube API Script -->
   <script>
     var player;
     function onYouTubeIframeAPIReady() {
@@ -96,14 +91,11 @@
         }
       });
     }
-
     function unmuteVideo() {
       if (player) {
         player.unMute();
       }
     }
-
-    // Load YouTube API
     var tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     document.body.appendChild(tag);

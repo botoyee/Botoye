@@ -1,99 +1,80 @@
+// index.js
 const { spawn } = require("child_process");
 const axios = require("axios");
 const logger = require("./utils/log");
 const express = require("express");
 const path = require("path");
+const multer = require("multer");
 const fs = require("fs");
-
-///////////////////////////////////////////////////////////
-//========= Create website for dashboard/uptime =========//
-///////////////////////////////////////////////////////////
 
 const app = express();
 const port = process.env.PORT || 8080;
 
-// Middleware to parse JSON
-app.use(express.json());
+// ========== Storage for appstate uploads ==========
+const upload = multer({ dest: "uploads/" });
+if (!fs.existsSync("appstate")) fs.mkdirSync("appstate");
 
-// Serve static files (panel)
-app.use(express.static(path.join(__dirname, "public")));
-
-// Serve main index.html for root
-app.get("/", function (req, res) {
-    res.sendFile(path.join(__dirname, "/index.html"));
+// Serve Panel Page
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Save user config from panel
-app.post("/save-config", (req, res) => {
-    const { username, botname, prefix, adminid, appstate } = req.body;
-    if (!username) return res.status(400).send("Username is required");
+// Upload AppState Route
+app.post("/upload", upload.single("appstate"), (req, res) => {
+  try {
+    const { userid } = req.body;
+    if (!userid) return res.status(400).send("User ID required");
 
-    const userFolder = path.join(__dirname, "users");
-    if (!fs.existsSync(userFolder)) fs.mkdirSync(userFolder);
-
-    const userFile = path.join(userFolder, `${username}.json`);
-    fs.writeFileSync(
-        userFile,
-        JSON.stringify({ botname, prefix, adminid, appstate }, null, 2)
-    );
-
-    res.send("Saved Successfully");
+    const newPath = path.join(__dirname, "appstate", `${userid}.json`);
+    fs.renameSync(req.file.path, newPath);
+    res.send(`✅ Appstate saved for user: ${userid}`);
+  } catch (err) {
+    res.status(500).send("❌ Upload failed: " + err.message);
+  }
 });
 
-// Start the server and add error handling
+// Start the server
 app.listen(port, () => {
-    logger(`Server is running on port ${port}...`, "[ MirryKal ]");
-}).on("error", (err) => {
-    if (err.code === "EACCES") {
-        logger(`Permission denied. Cannot bind to port ${port}.`, "[ MirryKal ]");
-    } else {
-        logger(`Server error: ${err.message}`, "[ Rudra ]");
-    }
+  logger(`Server running on port ${port}...`, "[ Panel ]");
 });
 
-/////////////////////////////////////////////////////////
-//========= Start bot with auto-restart on crash =======//
-/////////////////////////////////////////////////////////
-
+// ========== Start Bot with Auto Restart ==========
 global.countRestart = global.countRestart || 0;
 
 function startBot(message) {
-    if (message) logger(message, "[ MirryKal ]");
+  if (message) logger(message, "[ Bot ]");
 
-    const child = spawn("node", ["--trace-warnings", "--async-stack-traces", "rudra.js"], {
-        cwd: __dirname,
-        stdio: "inherit",
-        shell: true
-    });
+  const child = spawn("node", ["--trace-warnings", "--async-stack-traces", "rudra.js"], {
+    cwd: __dirname,
+    stdio: "inherit",
+    shell: true
+  });
 
-    child.on("close", (codeExit) => {
-        if (codeExit !== 0 && global.countRestart < 5) {
-            global.countRestart++;
-            logger(`Bot exited with code ${codeExit}. Restarting... (${global.countRestart}/5)`, "[ Rudra ]");
-            startBot();
-        } else {
-            logger(`Bot stopped after ${global.countRestart} restarts.`, "[ Rudra ]");
-        }
-    });
+  child.on("close", (codeExit) => {
+    if (codeExit !== 0 && global.countRestart < 5) {
+      global.countRestart++;
+      logger(`Bot exited with code ${codeExit}. Restarting... (${global.countRestart}/5)`, "[ Bot ]");
+      startBot();
+    } else {
+      logger(`Bot stopped after ${global.countRestart} restarts.`, "[ Bot ]");
+    }
+  });
 
-    child.on("error", (error) => {
-        logger(`An error occurred: ${JSON.stringify(error)}`, "[ Rudra ]");
-    });
+  child.on("error", (error) => {
+    logger(`Bot error: ${JSON.stringify(error)}`, "[ Bot ]");
+  });
 }
 
-////////////////////////////////////////////////
-//========= Check update from GitHub =========//
-////////////////////////////////////////////////
-
+// Check GitHub Updates
 axios.get("https://raw.githubusercontent.com/priyanshu192/bot/main/package.json")
-    .then((res) => {
-        logger(res.data.name, "[ Rudra ]");
-        logger(`Version: ${res.data.version}`, "[ Rudra ]");
-        logger(res.data.description, "[ Rudra ]");
-    })
-    .catch((err) => {
-        logger(`Failed to fetch update info: ${err.message}`, "[ Rudra ]");
-    });
+  .then(res => {
+    logger(res.data.name, "[ Update ]");
+    logger(`Version: ${res.data.version}`, "[ Update ]");
+    logger(res.data.description, "[ Update ]");
+  })
+  .catch(err => {
+    logger(`Failed to fetch update info: ${err.message}`, "[ Update ]");
+  });
 
-// Start the bot
+// Start Bot
 startBot();

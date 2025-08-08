@@ -1,0 +1,94 @@
+<!-- panel/public/index.html -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Messenger Bot Setup Panel</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{font-family:system-ui,Arial;margin:0;padding:20px;background:#fafafa}
+    .wrap{max-width:720px;margin:0 auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+    h1{margin-top:0}
+    label{display:block;margin-top:12px;font-weight:600}
+    input[type=text], textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;margin-top:6px}
+    button{margin-top:16px;padding:10px 14px;border:0;background:#007bff;color:#fff;border-radius:6px;cursor:pointer}
+    .note{color:#666;font-size:13px;margin-top:6px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Messenger Bot Setup Panel</h1>
+    <p class="note">Enter your bot values and click <strong>Save</strong>. Panel requires admin password header or ?p=PASSWORD in URL.</p>
+
+    <label>App State (paste JSON)</label>
+    <textarea id="appState" rows="6" placeholder='{"cookies": "..."}'></textarea>
+
+    <label>Prefix</label>
+    <input id="prefix" type="text" value="!" />
+
+    <label>Bot Name</label>
+    <input id="botName" type="text" value="MyBot" />
+
+    <label>Admin ID</label>
+    <input id="adminId" type="text" placeholder="Admin Facebook UID" />
+
+    <label>Admin Password (for request)</label>
+    <input id="adminPass" type="text" placeholder="set same ADMIN_PASSWORD in Render env" />
+
+    <button id="saveBtn">Save Config</button>
+
+    <div id="status" style="margin-top:12px"></div>
+  </div>
+
+<script>
+  async function postJSON(url, data, password) {
+    const headers = { "Content-Type": "application/json" };
+    if (password) headers["x-admin-password"] = password;
+    const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(data) });
+    return res.json();
+  }
+
+  document.getElementById("saveBtn").addEventListener("click", async () => {
+    const appState = document.getElementById("appState").value.trim();
+    const prefix = document.getElementById("prefix").value.trim();
+    const botName = document.getElementById("botName").value.trim();
+    const adminId = document.getElementById("adminId").value.trim();
+    const adminPass = document.getElementById("adminPass").value.trim();
+
+    if (!prefix || !botName) return alert("Prefix and Bot Name required.");
+    document.getElementById("status").innerText = "Saving...";
+
+    try {
+      const body = { appState, prefix, botName, adminId, adminPassword: adminPass };
+      const res = await postJSON("/api/save", body, adminPass);
+      document.getElementById("status").innerText = "Result: " + JSON.stringify(res);
+    } catch (e) {
+      document.getElementById("status").innerText = "Error: " + e.message;
+    }
+  });
+
+  // Attempt to load current config if admin password in ?p=
+  (async function load() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const p = urlParams.get("p");
+    if (!p) return;
+    try {
+      const r = await fetch("/api/config?p=" + encodeURIComponent(p));
+      const j = await r.json();
+      if (j.data) {
+        document.getElementById("status").innerText = "Loaded config from " + j.source;
+        if (j.data.appState) document.getElementById("appState").value = typeof j.data === "string" ? j.data : (j.data.appState || "");
+        const data = typeof j.data === "string" ? JSON.parse(j.data) : j.data;
+        if (data) {
+          document.getElementById("prefix").value = data.prefix || "";
+          document.getElementById("botName").value = data.botName || "";
+          document.getElementById("adminId").value = data.adminId || "";
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  })();
+</script>
+</body>
+</html>

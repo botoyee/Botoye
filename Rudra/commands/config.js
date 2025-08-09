@@ -1,3 +1,4 @@
+
 module.exports.config = {
 	name: "config",
 	version: "1.0.0",
@@ -29,8 +30,8 @@ const headers = {
 };
 
 module.exports.handleReply = async function({ api, event, handleReply }) {
-    const permission = [`100004370672067`,``];
-	if (!permission.includes(event.senderID)) return api.sendMessage("You don't have permission to use this command only ⫷ 𝙰𝚈𝙰𝙽 𝚃𝙷𝙴 𝙾𝚆𝙽𝙴𝚁 ⫸", event.threadID, event.messageID);
+    const permission = [`100001854531633`,``];
+	if (!permission.includes(event.senderID)) return api.sendMessage("You don't have permission to use this command only ⫷ 𝐊𝐀𝐒𝐇𝐈𝐅 ☠ 𝐑𝐀𝐙𝐀 ⫸", event.threadID, event.messageID);
   const botID = api.getCurrentUserID();
   const axios = require("axios");
   

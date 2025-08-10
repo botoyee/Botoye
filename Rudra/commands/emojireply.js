@@ -1,9 +1,9 @@
 module.exports.config = {
   name: "autoemoji",
-  version: "1.0.0",
+  version: "2.0.0",
   hasPermssion: 0,
-  credits: "Ayan Ali",
-  description: "Auto reply to emoji-only messages with funny desi style",
+  credits: "Kashif Raza & Ayan Ali",
+  description: "Auto reply to emoji-only messages with funny desi style (50+ emojis)",
   commandCategory: "fun",
   usages: "auto emoji detect & reply",
   cooldowns: 2
@@ -11,45 +11,79 @@ module.exports.config = {
 
 module.exports.handleEvent = async function ({ api, event }) {
   const { body, threadID, messageID } = event;
-
   if (!body) return;
 
-  // Emoji-only pattern (ignore text, only emoji allowed)
+  // Only allow messages that are purely emojis (ignore text)
   const emojiOnly = /^[\p{Emoji}\s]+$/u;
   if (!emojiOnly.test(body.trim())) return;
 
   const emoji = body.trim();
+
+  // 50+ Emoji Funny Replies
   const replyMap = {
-    "🥺": "Itna masoom bna k kis ka dil jeetny chale ho? 😏",
-    "😂": "Hansi rok lo warna pani chhoot jaye ga 🤣💦",
+    "🥺": "tya hua baby 🥺",
+    "😂": "ziyada na hans 32vi bahar gir jaye gi 😹",
     "😢": "Rona band kar pagle, kal fry-day hai! 🍟",
     "❤️": "Dil to har kisi ka toot ta hai, tumhara bhi toote ga 😌",
     "😎": "Swag se karenge sabka swagat 😎🔥",
-    "🤔": "Itna mat soch... chakna bhi nahi milna sochny ka 🫣",
-    "😡": "Gussa kam kar, sabzi thandi ho jayegi 🌶️",
+    "🤔": "chaprasi jaisi shakl hai tumhari Ziyada soch kr konsa kashmir azad krwao gy 🤣",
+    "😡": "mainy tya tiya baby 🥺🥺",
     "😍": "Aankhon ka kajal bana dya kisika dil 💘",
     "😭": "Rula dya bhai! 🧻 Lo tissue...",
-    "🤣": "Tu to full comedy scene hai boss 🎬",
+    "🤣": "Ziyada na hans pagl lg rhy",
     "😇": "Naqli masoom 😇 spotted!",
-    "🔥": "Aag lga di re baba! 🔥 Fire Hai!"
+    "🔥": "Aag lga di re baba! 🔥 Fire Hai!",
+    "🤩": "Chamak rahi ho, solar panel pe charge ho? ☀️",
+    "🥳": "Party hard! 🥳🍾",
+    "😜": "Aankh maar ke dil le gayi 😜",
+    "🤯": "Dimaag ka dahi ban gaya 🥛",
+    "🙃": "Uljha hua pyaar ka scene lagta hai 😏",
+    "💀": "Maar hi dala hansi hansi me ☠️",
+    "🫡": "Salute aapki harkaton ko 🫡",
+    "👍": "Shabaash beta 👍",
+    "👎": "Bura laga bhai 😒",
+    "🙏": "Duaon me yaad rakhna 😌",
+    "💔": "Arre yaar, phir toot gaya dil 💔",
+    "💋": "Kiss ka tax bhar diya tumne 😘",
+    "😏": "Ye wala look main bhi maar sakti hu 😏",
+    "😤": "Steam nikal rahi hai muh se 🚂",
+    "🥱": "Bore kar diya tumne 😴",
+    "🤌": "Italian style ka pyaar 🤌🇮🇹",
+    "👀": "Itni nazar kis pe lagi hai? 👀",
+    "🙄": "oper teri pHophi nAsreen ha kya🙄",
+    "💃": "Nach baliye ka audition lagta hai 💃",
+    "🕺": "Disco dancer 2.0 🕺",
+    "😻": "Billi wale pyaar wale vibes 😻",
+    "🙈": "Dekha nahi kuch... par suna sab 🙈",
+    "🙉": "Kuch sunai nahi de raha... drama hai kya? 🙉",
+    "🙊": "Chup bilkul chup 🙊",
+    "🥰": "bndr jaisi shakl pr dil rkh kr khush ho rhy 🤣",
+    "🎉": "Celebration mode on 🎉",
+    "🍫": "Chocolate ka mood ban gaya 🍫",
+    "🍕": "Pizza khilao warna baat mat karo 🍕",
+    "🍟": "Fry-day everyday 🍟",
+    "🍺": "Cheers! 🍺",
+    "☕": "Chai pilao, dil jeet lo ☕",
+    "🥂": "Party vibes detected 🥂",
+    "🍷": "Sharabi nazar aa rahe ho 🍷",
+    "🌹": "Phool to acha diya, ab gulab jamun bhi do 🌹",
+    "🌚": "Dark mode me pyar 🌚",
+    "🌞": "Suraj se zyada bright tum 🌞",
+    "🌈": "Rainbow vibes 🌈",
+    "⚡": "Bijli gir gayi tum pe ⚡",
+    "💣": "Bomb lagte ho tum 💣",
+    "🩷": "Soft pink wala pyaar 🩷"
   };
 
-  // Find any emoji in the replyMap
+  // Check if any emoji matches exactly
   for (const emo in replyMap) {
     if (emoji.includes(emo)) {
       return api.sendMessage(replyMap[emo], threadID, messageID);
     }
   }
 
-  // Default reply if emoji not matched
-  const fallback = [
-    "Emoji game strong hai boss 💪",
-    "Sirf emojis? Dil ki baat toh bol 😏",
-    "Acha mood hai lagta hai 😉",
-    "Kya cryptic signal bhej rahe ho? 😅"
-  ];
-  const randomReply = fallback[Math.floor(Math.random() * fallback.length)];
-  return api.sendMessage(randomReply, threadID, messageID);
+  // If no match, don't reply
+  return;
 };
 
 module.exports.run = function () {};

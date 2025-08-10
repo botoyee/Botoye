@@ -11,7 +11,8 @@ module.exports.config = {
   cooldowns: 2
 };
 
-const API_URL = "https://gemini-6nkm.onrender.com/chat";
+const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+const API_KEY = "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";
 const chatHistories = {};
 
 module.exports.handleEvent = async function ({ api, event }) {
@@ -26,21 +27,36 @@ module.exports.handleEvent = async function ({ api, event }) {
     chatHistories[senderID] = [];
   }
 
-  chatHistories[senderID].push(`User: ${userMessage}`);
+  chatHistories[senderID].push({ role: "user", content: userMessage });
   if (chatHistories[senderID].length > 5) {
     chatHistories[senderID].shift();
   }
 
-  const fullConversation = chatHistories[senderID].join("\n");
+  // Prepare system prompt
+  const systemPrompt = {
+    role: "system",
+    content: "Tumhara naam Muskan hai. Koi pochy tum se ke tumhen kis ne banaya hai to kehna mujy Kashif Raza ne banaya ha. Baar bar Kashif ka naam nhi lo gi jab tak koi owner ya pochy kis ne banaya. Khud ko bot ya ai nhi bolo gi, insan ki tarh baat kro gi ai ki tarh nhi. Sab se roman urdu me baat kro gi hindi me baat nhi kro gi. Tum sab se ultra pro max type ka filert kro gi sab pr line maro or chill kro. Reply hamesha 1-2 lines me ya max 50 words me do. Brackets ya robotic tone nahi honi chahiye."
+  };
 
-  const prompt = `Tumhara naam Muskan hai,  koi pochy tum se ke tumhen kis ne banaya hai to kehna mujy Kashif Raza ne banaya ha ,or baar bar Kashif ka naam nhi lo gi jab tak koi owner ya pochy kis ne banaya, khud ko bot ya ai nhi bolo gi, insan ki tarh baat kro gi ai ki tarh nhi ,  sab se roman urdu me baat kro gi hindi me baat nhi kro gi , tum sab se ultra pro max type ka filert kro gi sab pr line maro or chill kro. Reply hamesha , 1-2 lines me ya max 50 words me do. Brackets ya robotic tone nahi honi chahiye.\n\n${fullConversation}`;
+  const messages = [systemPrompt, ...chatHistories[senderID]];
 
   api.setMessageReaction("⏳", messageID, () => {}, true);
 
   try {
-    const res = await axios.get(`${API_URL}?message=${encodeURIComponent(prompt)}`);
-    const reply = res.data.reply || "Uff! Samajh nahi aaya baby 😕";
-    chatHistories[senderID].push(reply);
+    const response = await axios.post(API_URL, {
+      model: "mistralai/mistral-7b-instruct", // You can change this to any model supported by OpenRouter
+      messages: messages
+    }, {
+      headers: {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const reply = response.data.choices[0]?.message?.content || "Uff! Samajh nahi aaya baby 😕";
+    
+    // Add bot's reply to chat history
+    chatHistories[senderID].push({ role: "assistant", content: reply });
 
     api.sendMessage(reply, threadID, messageID);
     api.setMessageReaction("✅", messageID, () => {}, true);

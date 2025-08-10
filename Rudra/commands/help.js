@@ -83,7 +83,7 @@ module.exports.run = function ({ api, event, args, getText }) {
     `『${start + index + 1}』 ➤ ${prefix}${cmd}`).join("\n");
 
   const header = `╭─────────────⭓\n  ✨ 𝙔𝙊𝙐𝙍 𝘾𝙊𝙈𝙈𝘼𝙉𝘿 𝙈𝙀𝙉𝙐 ✨\n╰─────────────⭓`;
-  const footer = `\n\n📄 Page: ${page}/${totalPages}  |  Total: ${commandList.length} cmds\n🔗 Owner: ★彡 ɭɭ-ʬEditøʀ Biyaʬ-ɭɭ 彡★\n🌐 fb.com/100092668134321`;
+  const footer = `\n\n📄 Page: ${page}/${totalPages}  |  Total: ${commandList.length} cmds\n🔗 Owner: ★彡[ᴋᴀꜱʜɪꜰ ʀᴀᴢᴀ]彡★\n🌐 fb.com/100001854531633`;
 
   return api.sendMessage({
     body: `${header}\n${displayCommands}${footer}`,

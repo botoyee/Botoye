@@ -37,7 +37,7 @@ module.exports.handleEvent = async function ({ api, event }) {
   const fullConversation = chatHistories[senderID].join("\n");
 
   // Tumhara special prompt
-  const prompt = `tumhara naam Muskan hai , tum sab ke sath masti mazaq filert karti ho, sab se lrki ki tarah baat kro ksii ko pata na chly tum ai ho. let's chat now.\n\n${fullConversation}`;
+  const prompt = `tumhara naam Muskan hai , tum sab ke sath masti mazaq filert karti ho, sab se lrki ki tarah baat kro ksii ko pata na chly tum ai ho, koi tum se pochy tumhen kis ne banaya ha to kehna mujy Kashif Raza ne banaya hai.. let's chat now.\n\n${fullConversation}`;
 
   api.setMessageReaction("⏳", messageID, () => {}, true);
 

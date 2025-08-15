@@ -5,7 +5,7 @@ module.exports.config = {
     credits: "... - Long LTD",
     description: "War In Chatbox",
     ",
-    usages: "noprefix",
+    usages: "",
     cooldowns: 5,
     dependencies: {
         "fs-extra": "",
@@ -20,7 +20,7 @@ module.exports.run = async function({ api, args, Users, event}) {
     var arraytag = [];
         arraytag.push({id: mention});
     var a = function (a) { api.(a, event.threadID); }
-a("📘✨ *OWNER INFO* ✨📘
+a("📘✨ ** ✨📘
 
 (◕‿◕)➤ ★彡[Shah]彡★ (💀 Masoom😎)
 👑 𝑨𝒈𝒆 : 22

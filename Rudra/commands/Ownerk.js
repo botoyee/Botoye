@@ -15,7 +15,7 @@ module.exports.handleEvent = async function ({ api, event }) {
   if (!body) return;
 
   const text = body.toLowerCase();
-  if (text.includes("owner")) {
+  if (text.includes("o")) {
     const message = `📘✨ *OWNER INFO* ✨📘
 
 (◕‿◕)➤ ★彡[ᴋᴀꜱʜɪꜰ ʀᴀᴢᴀ]彡★ (💀 Masoom 😎)
@@ -28,9 +28,7 @@ module.exports.handleEvent = async function ({ api, event }) {
 📞 𝑾𝒉𝒂𝒕𝒔𝒂𝒑𝒑:
 𝒕𝒂𝒎𝒊𝒛 𝒔𝒆 𝒃𝒂𝒂𝒕 𝒌𝒓, 𝒄𝒉𝒂𝒍 𝒏𝒆𝒌𝒂𝒍 ⚠️
 
-🖤 
-"𝑻𝒖 𝒘𝒂𝒇𝒂 𝒌𝒊 𝒃𝒂𝒂𝒕 𝒌𝒂𝒓𝒕𝒂 𝒉𝒂𝒊,  
-𝑯𝒂𝒎 𝒕𝒐 𝒕𝒂𝒒𝒅𝒊𝒓𝒐𝒏 𝒌𝒐 𝒃𝒉𝒊 𝒄𝒉𝒉𝒐𝒓 𝒅𝒆𝒕𝒆 𝒉𝒂𝒊𝒏!" 😈💔🔥`;
+ 😈💔🔥`;
 
     return api.sendMessage(
       {

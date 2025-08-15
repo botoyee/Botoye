@@ -24,9 +24,9 @@ module.exports.handleEvent = async function ({ api, event }) {
     const userName = userInfo[senderID]?.name || "jaan";
 
     const replies = [
-      "Tere baad to lipstick bhi lagayi... par mirror ne kaha 'bekaar mehnat hai' 💄😒",
-      "Tere jaise se to khuda bhi kahe... 'beta sabar ka imtihaan mat le' 😩👐",
-      "Us ne kaha chand ho tum... lekin full moon ki load shedding jaisi lagti ho 🌚😂",
+      "mera pyarr.edhrr ao tumyy godee me uthaoo💋'💄😒",
+      "hyee hyee... 'beta sabar ka imtihaan mat le' 😩👐",
+      "Us ne kaha chand ho tum... i love u ummmmah🌚😂",
       "Mujhe us se mohabbat thi... par us ke signal weak thay 📶❌",
       "Tere bina to raaton ki neend gayi... par neend gayi nahi, tu sapno mein dikh gaya 👻",
       "Tujh pe ghazal likhna chahti thi... par dimaag bola 'waste of ink' 🖊️😤",
@@ -40,12 +40,19 @@ module.exports.handleEvent = async function ({ api, event }) {
       "𝐀𝐚𝐨 𝐝𝐚𝐫𝐝 𝐛𝐚𝐧𝐭𝐭𝐚𝐲 𝐡𝐚𝐢𝐧 𝐓𝐮𝐦 𝐝𝐚𝐫𝐰𝐚𝐳𝐚𝐲 𝐦𝐞𝐢𝐧 𝐮𝐧𝐠𝐥𝐢 𝐝𝐨 𝐏𝐡𝐢𝐫 𝐦𝐢𝐥 𝐤𝐚𝐫 𝐜𝐡𝐞𝐞𝐤𝐡𝐚𝐢𝐧 𝐦𝐚𝐚𝐫𝐭𝐚𝐲 𝐡𝐚𝐢𝐧🙈🙈",
       "𝐓𝐚𝐢𝐫𝐚𝐲 𝐣𝐚𝐚𝐧𝐞 𝐤𝐞 𝐛𝐚𝐚𝐝 𝐰𝐚𝐪𝐭 𝐭𝐡𝐚𝐦 𝐬𝐚 𝐠𝐚𝐲𝐚 𝐭𝐡𝐚 𝐁𝐚𝐚𝐝 𝐦𝐞𝐢𝐧 𝐩𝐚𝐭𝐚 𝐜𝐡𝐚𝐥𝐚 𝐤𝐞 𝐆𝐡𝐚𝐫𝐢 𝐤𝐚 𝐜𝐞𝐥𝐥 𝐤𝐡𝐚𝐭𝐚𝐦 𝐡𝐨𝐠𝐚𝐲𝐚 𝐭𝐡𝐚🤣🙈",
       "𝐒𝐡𝐮𝐤𝐚𝐫 𝐡𝐚𝐢 𝐥𝐚𝐫𝐤𝐢𝐲𝐚𝐧 𝐪𝐮𝐫𝐛𝐚𝐧𝐢 𝐤𝐚 𝐣𝐚𝐧𝐰𝐚𝐫 𝐥𝐚𝐢𝐧𝐚𝐲 𝐧𝐚𝐡𝐢 𝐣𝐚𝐭𝐢 𝐰𝐚𝐫𝐧𝐚 𝐩𝐢𝐧𝐤 𝐜𝐨𝐥𝐨𝐫 𝐤𝐚 𝐛𝐚𝐤𝐫𝐚 𝐚𝐮𝐫 𝐥𝐢𝐠𝐡𝐭 𝐠𝐫𝐞𝐞𝐧 𝐜𝐨𝐥𝐨𝐫 𝐤𝐢 𝐠𝐚𝐲𝐞 𝐤𝐚𝐡𝐚𝐧 𝐬𝐞 𝐚𝐚𝐭𝐢🤣😂",
-      "𝐦𝐮𝐧𝐠𝐡 𝐩𝐡𝐚𝐥𝐢 𝐦𝐞 𝐝𝐚𝐧𝐚 𝐧𝐡𝐢 𝐊𝐚𝐬𝐡𝐢𝐟 𝐤𝐨 𝐬𝐡𝐨𝐫 𝐤𝐫 𝐣𝐚𝐧𝐚 𝐧𝐡𝐢😅😅😅",
-      "𝐓𝐮𝐦𝐚𝐡𝐚𝐫𝐢 𝐳𝐮𝐥𝐟𝐨𝐧 𝐦𝐞𝐢𝐧 𝐮𝐥𝐣𝐡𝐚 𝐡𝐰𝐚 𝐡𝐚𝐢 𝐌𝐨𝐡𝐚𝐥𝐥𝐞 𝐤𝐚 𝐬𝐮𝐥𝐣𝐡𝐚 𝐡𝐰𝐚 𝐥𝐚𝐫𝐤𝐚 𝐊𝐚𝐬𝐡𝐢𝐟",
-      "𝐭𝐮𝐦 𝐛𝐚𝐬 𝐦𝐮 𝐛𝐚𝐧𝐚𝐭𝐢 𝐫𝐞𝐡𝐧𝐚 𝐊𝐚𝐬𝐡𝐢𝐟 𝐤𝐨 𝐤𝐨𝐢 𝐨𝐫 𝐩𝐚𝐭𝐚 𝐥𝐞 𝐠𝐢 🤣😅"
-    ];
-
-    const randomReply = replies[Math.floor(Math.random() * replies.length)];
+      "𝐦𝐮𝐧𝐠𝐡 𝐩𝐡𝐚𝐥𝐢 𝐦𝐞 𝐝𝐚𝐧𝐚 𝐧𝐡𝐢 Shah 𝐤𝐨 𝐬𝐡𝐨𝐫 𝐤𝐫 𝐣𝐚𝐧𝐚 𝐧𝐡𝐢😅😅😅",
+      "𝐓𝐮𝐦𝐚𝐡𝐚𝐫𝐢 𝐳𝐮𝐥𝐟𝐨𝐧 𝐦𝐞𝐢𝐧 𝐮𝐥𝐣𝐡𝐚 𝐡𝐰𝐚 𝐡𝐚𝐢 𝐌𝐨𝐡𝐚𝐥𝐥𝐞 𝐤𝐚 𝐬𝐮𝐥𝐣𝐡𝐚 𝐡𝐰𝐚 𝐥𝐚𝐫𝐤𝐚 Shah",
+      "𝐭𝐮𝐦 𝐛𝐚𝐬 𝐦𝐮 𝐛𝐚𝐧𝐚𝐭𝐢 𝐫𝐞𝐡𝐧𝐚 Shah 𝐤𝐨 𝐤𝐨𝐢 𝐨𝐫 𝐩𝐚𝐭𝐚 𝐥𝐞 𝐠𝐢 🤣😅",Tumko meri ittu si bhi yaad nahi aati",
+      "Itna single hoon ke khwab mein bhi larki ke haan karne se pehle aankh khul jaati hai 🙂",
+      "Aao pyaar karein💋💋",
+      "Kaash hum dono WhatsApp pe hote🥹🙈",
+      "G mre Jan agya ha bot ki Jan bolo🫢",
+      "ao Tumy hug kro zooor se💋🙈",
+      "Aoo tumye apnii godee me uthao💋💋🙈",
+      "G sweetheart😘",
+      "ummmmmmah💋"
+      ,];
+   const randomReply = replies[Math.floor(Math.random() * replies.length)];
 
     return api.sendMessage({
       body: `@${userName}, ${randomReply}`,

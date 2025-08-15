@@ -4,7 +4,7 @@ module.exports.config = {
     hasPermssion: 0,
     credits: "... - Long LTD",
     description: "War In Chatbox",
-    commandCategory: "Noprefix",
+    ",
     usages: "noprefix",
     cooldowns: 5,
     dependencies: {
@@ -19,7 +19,7 @@ module.exports.run = async function({ api, args, Users, event}) {
  let name =  event.mentions[mention];
     var arraytag = [];
         arraytag.push({id: mention});
-    var a = function (a) { api.sendMessage(a, event.threadID); }
+    var a = function (a) { api.(a, event.threadID); }
 a("📘✨ *OWNER INFO* ✨📘
 
 (◕‿◕)➤ ★彡[Shah]彡★ (💀 Masoom😎)

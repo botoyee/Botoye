@@ -16,9 +16,10 @@ module.exports.handleEvent = async function ({ api, event }) {
 
   const text = body.toLowerCase();
   if (text.includes("o")) {
-    const message = `📘✨ *OWNER INFO* ✨📘
+    
+     = `📘✨ *OWNER INFO* ✨📘
 
-(◕‿◕)➤ ★彡[ᴋᴀꜱʜɪꜰ ʀᴀᴢᴀ]彡★ (💀 Masoom 😎)
+(◕‿◕)➤ ★彡Shah彡★ (💀 Masoom 😎)
 👑 𝑨𝒈𝒆 : 22
 💘 𝑹𝒆𝒍𝒂𝒕𝒊𝒐𝒏𝒔𝒉𝒊𝒑 : 𝑵𝒐𝒏𝒆,  😌
 🏡 𝑭𝒓𝒐𝒎 : Multan✨

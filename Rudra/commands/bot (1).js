@@ -24,6 +24,12 @@ module.exports.handleEvent = async function ({ api, event }) {
     const userName = userInfo[senderID]?.name || "jaan";
 
     const replies = [
+    "Tum jab 'bot' bolte ho, mera gurda dhadakne lagta hai 🥺🙊🙈",
+    "Bhai jaan group mein gandi baatein mat karo",
+     "Lips kissing is not romance... it's sharing bacteria",
+      "Tum mera dil chura nahi paye... kya faida tumhari chor jaisi shakal ka!! ",
+      "Pyaari voice wali girls mujhe voice msg kar sakti hain🙂",
+      " Pata nahi log itni balance life kaise guzarte hain... mera tou kabhi paratha pehle khatam ho jaata hai kabhi anda 😩💔
       "Kaash hum dono WhatsApp pe hote ❤️🥺. edhrr ao tumyy godee me uthaoo💋' 💄😒",
       "hyee hyee... 'beta sabar ka imtihaan mat le' 😩👐",
       "Us ne kaha chand ho tum... i love u ummmmah🌚😂",

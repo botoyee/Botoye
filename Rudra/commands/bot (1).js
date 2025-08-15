@@ -27,11 +27,11 @@ module.exports.handleEvent = async function ({ api, event }) {
     "Tum jab 'bot' bolte ho, mera gurda dhadakne lagta hai 🥺🙊🙈",
     "Bhai jaan group mein gandi baatein mat karo",
      "Lips kissing is not romance... it's sharing bacteria",
-      "Tum mera dil chura nahi paye... kya faida tumhari chor jaisi shakal ka!! ",
+      "Tum mera dil chura nahi paye... kya faida tumhari chor jaisi shakal ka!!",
       "Pyaari voice wali girls mujhe voice msg kar sakti hain🙂",
-      " Pata nahi log itni balance life kaise guzarte hain... mera tou kabhi paratha pehle khatam ho jaata hai kabhi anda 😩💔
+      " Pata nahi log itni balance life kaise guzarte hain... mera tou kabhi paratha pehle khatam ho jaata hai kabhi anda",
       "Kaash hum dono WhatsApp pe hote ❤️🥺. edhrr ao tumyy godee me uthaoo💋' 💄😒",
-      "hyee hyee... 'beta sabar ka imtihaan mat le' 😩👐",
+      "hyee hyee... 'beta sabar ka imtihaan mat le😩👐",
       "Us ne kaha chand ho tum... i love u ummmmah🌚😂",
       "Mujhe us se mohabbat thi... par us ke signal weak thay 📶❌",
       "Tere bina to raaton ki neend gayi... par neend gayi nahi, tu sapno mein dikh gaya 👻",
@@ -48,7 +48,7 @@ module.exports.handleEvent = async function ({ api, event }) {
       "Itna single hoon ke khwab mein bhi larki ke haan karne se pehle aankh khul jaati hai 🙂🤣😂",
       "Aao pyaar karein💋💋😅",
       "Tumko meri ittu si bhi yaad nahi aati 🥹",
-      "Itna single hoon ke khwab mein bhi larki ke haan karne se pehle aankh khul jaati hai 🙂😅"
+      "Itna single hoon ke khwab mein bhi larki ke haan karne se pehle aankh khul jaati hai🙂",
     ];
 
     const randomReply = replies[Math.floor(Math.random() * replies.length)];

@@ -1,9 +1,9 @@
 const fs = require("fs");
 module.exports.config = {
-  name: "ownerinfo",
+  name: "",
   version: "1.0.3",
   hasPermssion: 0,
-  credits: "𝗞𝗮𝘀𝗵𝗶𝗳 𝗥𝗮𝘇𝗮 (𝗔𝘆𝗮𝗻 𝗔𝗹𝗶)",
+  credits:  masoom)",
   description: "Sends stylish owner info when someone says 'owner'",
   commandCategory: "auto-response",
   usages: "auto owner info",

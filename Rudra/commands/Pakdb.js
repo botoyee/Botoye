@@ -2,10 +2,10 @@ const axios = require("axios");
 
 module.exports = {
   config: {
-    name: "pakdb",
+    name: ",
     version: "1.0.0",
     author: "Mirrykal",
-    description: "Search Pakistani mobile number info using PakDatabase API",
+    description: "",
     commandCategory: "🔍 Utilities",
     usages: "pakdb <pakistani_number>",
     cooldowns: 5,
